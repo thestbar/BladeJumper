@@ -36,7 +36,7 @@ public class MainMenu implements Screen {
         titleLabel.setFontScale(titleLabelSize);
         rootTable.add(titleLabel).row();
 
-        Label nextLabel = new Label("Let's have fun on this weekend", this.game.skin);
+        Label nextLabel = new Label("Have fun :)", this.game.skin);
         nextLabel.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
         rootTable.add(nextLabel).padTop(50).row();
 

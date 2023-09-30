@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.thestbar.ludumdare54.screens.GameScreen;
 import com.thestbar.ludumdare54.screens.MainMenu;
 
 public class GameApp extends Game {
@@ -14,6 +14,7 @@ public class GameApp extends Game {
 	public ShapeRenderer renderer;
 	public Stage stage;
 	public Skin skin;
+	public final static boolean IS_DEV_ENV = true;
 	
 	@Override
 	public void create () {
@@ -22,10 +23,8 @@ public class GameApp extends Game {
 
 		renderer = new ShapeRenderer();
 		renderer.setAutoShapeType(true);
-		stage = new Stage(new ScreenViewport());
-		Gdx.input.setInputProcessor(stage);
 
-		this.setScreen(new MainMenu(this));
+		this.setScreen((IS_DEV_ENV) ? new GameScreen(this) : new MainMenu(this));
 	}
 
 	@Override
