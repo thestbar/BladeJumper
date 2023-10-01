@@ -29,6 +29,7 @@ public class GameScreen implements Screen {
     private ListenerClass listener;
 
     // TODO - Fix bug with 2 missing colliders
+    // TODO - There is a bug on double jump, when the player goes away from a platform without jumping
     public GameScreen(GameApp game) {
         this.game = game;
 
@@ -67,12 +68,10 @@ public class GameScreen implements Screen {
         inputUpdate(delta);
         cameraUpdate(delta);
         game.batch.setProjectionMatrix(camera.combined);
-        game.batch.begin();
         player.render(game.batch);
-        game.batch.end();
         tiledMapRenderer.setView(camera);
         tiledMapRenderer.render();
-        debugRenderer.render(world, camera.combined.scl(PPM));
+//        debugRenderer.render(world, camera.combined.scl(PPM));
     }
 
     private void inputUpdate(float delta) {
@@ -83,15 +82,20 @@ public class GameScreen implements Screen {
 
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
             horizontalForce -= 1;
+            player.playerState = Player.PlayerState.MOVE_LEFT;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.D)) {
             horizontalForce += 1;
+            player.playerState = Player.PlayerState.MOVE_RIGHT;
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.W) && listener.isPlayerOnGround()) {
             player.jump(800);
         } else if (Gdx.input.isKeyJustPressed(Input.Keys.W) && !listener.isPlayerOnGround() && listener.isAvailableDoubleJump()) {
             player.jump(1000);
             listener.useDoubleJump();
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            player.attack();
         }
         player.move(horizontalForce);
     }

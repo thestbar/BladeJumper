@@ -9,7 +9,7 @@ public final class Constants {
     // To go from screen coordinates to world coordinates we divide by PPM
     public static final float PPM = 16;
 
-    public static final float SCALE = 4f;
+    public static final float SCALE = 6f;
 
     public static final Vector2 GRAVITATIONAL_CONSTANT = new Vector2(0, -30f);
 
