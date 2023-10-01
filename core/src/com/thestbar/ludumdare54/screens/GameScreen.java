@@ -4,7 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
@@ -12,6 +11,8 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.thestbar.ludumdare54.GameApp;
+import com.thestbar.ludumdare54.Player;
+import com.thestbar.ludumdare54.listeners.ListenerClass;
 import com.thestbar.ludumdare54.utils.Constants;
 import com.thestbar.ludumdare54.utils.TiledObjectUtil;
 
@@ -22,11 +23,12 @@ public class GameScreen implements Screen {
     private Box2DDebugRenderer debugRenderer;
     private World world;
     private OrthographicCamera camera;
-    private Body player;
-    private Texture playerTex;
     private OrthogonalTiledMapRenderer tiledMapRenderer;
     private TiledMap map;
+    private Player player;
+    private ListenerClass listener;
 
+    // TODO - Fix bug with 2 missing colliders
     public GameScreen(GameApp game) {
         this.game = game;
 
@@ -38,9 +40,7 @@ public class GameScreen implements Screen {
         world = new World(Constants.GRAVITATIONAL_CONSTANT, true);
         debugRenderer = new Box2DDebugRenderer();
 
-        player = createBox(200, 200, 10, 14, BodyDef.BodyType.DynamicBody);
-
-        playerTex = new Texture(Gdx.files.internal("spritesheets/ld54-player.png"));
+        player = new Player(world);
         // The fileName path is based on project's working directory.
         // It is very important to keep the structure of the LDtk program
         // output. The tmx file uses the other resources to construct itself.
@@ -55,7 +55,8 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
-
+        listener = new ListenerClass();
+        world.setContactListener(listener);
     }
 
     @Override
@@ -67,8 +68,7 @@ public class GameScreen implements Screen {
         cameraUpdate(delta);
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
-        game.batch.draw(playerTex, player.getPosition().x * PPM - playerTex.getWidth() / 2f,
-                player.getPosition().y * PPM - playerTex.getHeight() / 2f);
+        player.render(game.batch);
         game.batch.end();
         tiledMapRenderer.setView(camera);
         tiledMapRenderer.render();
@@ -76,6 +76,9 @@ public class GameScreen implements Screen {
     }
 
     private void inputUpdate(float delta) {
+        if (player == null) {
+            return;
+        }
         int horizontalForce = 0;
 
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
@@ -84,33 +87,23 @@ public class GameScreen implements Screen {
         if (Gdx.input.isKeyPressed(Input.Keys.D)) {
             horizontalForce += 1;
         }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.W)) {
-            player.applyForceToCenter(0, 500, true);
+        if (Gdx.input.isKeyJustPressed(Input.Keys.W) && listener.isPlayerOnGround()) {
+            player.jump(800);
+        } else if (Gdx.input.isKeyJustPressed(Input.Keys.W) && !listener.isPlayerOnGround() && listener.isAvailableDoubleJump()) {
+            player.jump(1000);
+            listener.useDoubleJump();
         }
-        player.setLinearVelocity(horizontalForce * 7, player.getLinearVelocity().y);
-    }
-
-    private Body createBox(int x, int y, int width, int height, BodyDef.BodyType bodyType) {
-        Body body;
-        BodyDef def = new BodyDef();
-        def.type = bodyType;
-        def.position.set(x / PPM, y / PPM);
-        def.fixedRotation = true;
-        body = world.createBody(def);
-
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(width / 2f / PPM, height / 2f / PPM);
-
-        body.createFixture(shape, 1.0f);
-        shape.dispose();
-
-        return body;
+        player.move(horizontalForce);
     }
 
     private void cameraUpdate(float delta) {
         Vector3 position = camera.position;
-        position.x = player.getPosition().x * PPM;
-        position.y = player.getPosition().y * PPM;
+        // b = a + (b - a) * lerp
+        // b = target
+        // a = current position
+        final float lerp = 0.1f;
+        position.x = position.x + (player.body.getPosition().x * PPM - position.x) * lerp;
+        position.y = position.y + (player.body.getPosition().y * PPM - position.y) * lerp;
         position.z = 10f;
         camera.position.set(position);
 
@@ -141,7 +134,7 @@ public class GameScreen implements Screen {
     public void dispose() {
         world.dispose();
         debugRenderer.dispose();
-        playerTex.dispose();
+        player.dispose();
         tiledMapRenderer.dispose();
         map.dispose();
     }

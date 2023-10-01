@@ -26,8 +26,12 @@ public class TiledObjectUtil {
             BodyDef bodyDef = new BodyDef();
             bodyDef.type = BodyDef.BodyType.StaticBody;
             body = world.createBody(bodyDef);
-            body.createFixture(shape, 1.0f);
-            assert shape != null;
+            FixtureDef fixtureDef = new FixtureDef();
+            fixtureDef.shape = shape;
+            fixtureDef.density = 1.0f;
+            fixtureDef.filter.categoryBits = Constants.BIT_GROUND;
+            fixtureDef.filter.maskBits = Constants.BIT_PLAYER | Constants.BIT_GROUND_SENSOR;
+            body.createFixture(fixtureDef);
             shape.dispose();
         }
     }
