@@ -28,7 +28,7 @@ public class TiledObjectUtil {
             body = world.createBody(bodyDef);
             FixtureDef fixtureDef = new FixtureDef();
             fixtureDef.shape = shape;
-            fixtureDef.density = 1.0f;
+            fixtureDef.density = 0f;
             fixtureDef.filter.categoryBits = Constants.BIT_GROUND;
             fixtureDef.filter.maskBits = Constants.BIT_PLAYER | Constants.BIT_GROUND_SENSOR;
             body.createFixture(fixtureDef);

@@ -9,6 +9,7 @@ import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.thestbar.ludumdare54.GameApp;
 import com.thestbar.ludumdare54.Player;
@@ -71,7 +72,7 @@ public class GameScreen implements Screen {
         player.render(game.batch);
         tiledMapRenderer.setView(camera);
         tiledMapRenderer.render();
-//        debugRenderer.render(world, camera.combined.scl(PPM));
+        debugRenderer.render(world, camera.combined.scl(PPM));
     }
 
     private void inputUpdate(float delta) {
