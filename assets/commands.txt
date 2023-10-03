@@ -1,0 +1,22 @@
+Build for MacOS
+1) Build the jar file from LibGDX
+2) Create a new directory (name it whatever you want) and create a dir with the name dir inside it
+3) Put the jar file inside the libs folder
+4) Open terminal from the directory (the one with the whatever name) and run the 2 commands
+
+Build runtime
+jlink --add-modules ALL-MODULE-PATH --output ./runtime
+
+Build smaller runtime
+jlink --add-modules ALL-MODULE-PATH --output ./runtime --strip-debug --no-man-pages --no-header-files --compress=2
+
+Build application
+jpackage --dest ./dist --input ./libs --name "Blade Jumper" --main-class com.thestbar.ludumdare54.DesktopLauncher --main-jar ./desktop-1.0.jar --runtime-image ./runtime --java-options -XstartOnFirstThread
+
+Note: The first time a MacOS user tries to launch the application it will crash and OS will try to delete
+      the file. The message will look like "AppName is damages and can't be opened. You should move it to the Bin".
+      DO NOT DELETE the file, instead just click Cancel (or Close) and go in System Settings -> Privacy & Security
+      and on the Security section you will find a message that says "AppName was blocked from use because it is not
+      from an identified developer" and below this message a button with the label Open Anyway exists. Click this button
+      and try again to open the Application. It is mandatory on the same Security section in Settings, the user to have
+      selected under "Allow application downloaded from" the value "App Store and identified developers".

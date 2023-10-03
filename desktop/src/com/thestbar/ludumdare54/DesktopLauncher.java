@@ -11,8 +11,8 @@ public class DesktopLauncher {
 		config.setForegroundFPS(60);
 		config.setTitle("LudumDare54");
 //		config.setFullscreenMode(Lwjgl3ApplicationConfiguration.getDisplayMode());
-		config.setWindowedMode(720 * Constants.SCREEN_SIZE_MULTIPLIER, 468 * Constants.SCREEN_SIZE_MULTIPLIER);
-//		config.setResizable(false);
+		config.setWindowedMode(1080 * Constants.SCREEN_SIZE_MULTIPLIER, 700 * Constants.SCREEN_SIZE_MULTIPLIER);
+		config.setResizable(false);
 		new Lwjgl3Application(new GameApp(), config);
 	}
 }

@@ -1,4 +1,4 @@
-package com.thestbar.ludumdare54;
+package com.thestbar.ludumdare54.gameobjects;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
@@ -7,10 +7,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.thestbar.ludumdare54.managers.SoundManager;
 import com.thestbar.ludumdare54.utils.Box2DUtils;
 import com.thestbar.ludumdare54.utils.Constants;
-
-import static com.thestbar.ludumdare54.utils.Constants.PPM;
 
 public class Player {
     public Body body;
@@ -28,22 +27,25 @@ public class Player {
     private boolean isAttacking;
     private float weaponStateTime;
     private final float WEAPON_FRAME_DURATION = 0.1f;
+    public float playerDamage;
+    public float maxHealthPoints;
+    public float healthPoints;
 
-    public Player(World world) {
+    public Player(World world, int x, int y) {
         // Create player
-        body = Box2DUtils.createBox(world,140, 820, 10, 14, BodyDef.BodyType.DynamicBody);
+        body = Box2DUtils.createBox(world, x, y, 10, 14, BodyDef.BodyType.DynamicBody);
         body.getFixtureList().get(0).setDensity(1);
         body.getFixtureList().get(0).setFriction(0);
         body.getFixtureList().get(0).getFilterData().categoryBits = Constants.BIT_PLAYER;
-        body.getFixtureList().get(0).getFilterData().maskBits = Constants.BIT_GROUND;
+        body.getFixtureList().get(0).getFilterData().maskBits = Constants.BIT_GROUND | Constants.BIT_POWERUP | Constants.BIT_ENEMY_SENSOR | Constants.BIT_LAVA | Constants.BIT_BULLET | Constants.BIT_LEVEL_END;
         body.getFixtureList().get(0).setUserData("player");
 
         // Create player ground sensor
         PolygonShape shape = new PolygonShape();
-        shape.setAsBox(4 / PPM, 1 / PPM, new Vector2(0, -7 / PPM), 0);
+        shape.setAsBox(4 / Constants.PPM, 1 / Constants.PPM, new Vector2(0, -7 / Constants.PPM), 0);
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
-        fixtureDef.filter.categoryBits = Constants.BIT_PLAYER;
+        fixtureDef.filter.categoryBits = Constants.BIT_GROUND_SENSOR;
         fixtureDef.filter.maskBits = Constants.BIT_GROUND;
         fixtureDef.isSensor = true;
         body.createFixture(fixtureDef).setUserData("ground_sensor");
@@ -65,21 +67,26 @@ public class Player {
         stateTime = 0f;
         isAttacking = false;
         weaponStateTime = 0f;
+        playerDamage = 30f;
+        healthPoints = 120f;
+        maxHealthPoints = 120f;
     }
 
     public enum PlayerState {
         REST,
         MOVE_LEFT,
         MOVE_RIGHT,
-        DIE
+        DIE,
+        WIN
     }
 
     public void render(SpriteBatch batch) {
         stateTime += Gdx.graphics.getDeltaTime();
         weaponStateTime += Gdx.graphics.getDeltaTime();
+
         renderPlayer(batch);
 
-        if (playerState != PlayerState.REST) {
+        if (playerState != PlayerState.REST && playerState != PlayerState.DIE) {
             if (isAttacking) {
                 renderWeaponAttack(batch);
             } else {
@@ -103,8 +110,8 @@ public class Player {
         }
         TextureRegion currentWeaponAnimationKeyFrame = currentWeaponAnimation.getKeyFrame(stateTime, true);
         float x = (playerState == PlayerState.MOVE_LEFT) ? -19f : 3f;
-        x += body.getPosition().x * PPM;
-        float y = body.getPosition().y * PPM - 9f;
+        x += body.getPosition().x * Constants.PPM;
+        float y = body.getPosition().y * Constants.PPM - 9f;
         batch.begin();
         batch.draw(currentWeaponAnimationKeyFrame, x, y);
         batch.end();
@@ -118,8 +125,8 @@ public class Player {
             currentWeaponAnimation = weaponRightAnimation;
         }
         TextureRegion currentWeaponAnimationKeyFrame = currentWeaponAnimation.getKeyFrame(stateTime, true);
-        float x = body.getPosition().x * PPM - 8f;
-        float y = body.getPosition().y * PPM - 8f;
+        float x = body.getPosition().x * Constants.PPM - 8f;
+        float y = body.getPosition().y * Constants.PPM - 8f;
         batch.begin();
         batch.draw(currentWeaponAnimationKeyFrame, x, y);
         batch.end();
@@ -144,12 +151,13 @@ public class Player {
 
         batch.begin();
         TextureRegion currentPlayerAnimationKeyFrame = currentPlayerAnimation.getKeyFrame(stateTime, true);
-        batch.draw(currentPlayerAnimationKeyFrame, body.getPosition().x * PPM - 8f,
-                body.getPosition().y * PPM - 8f);
+        batch.draw(currentPlayerAnimationKeyFrame, body.getPosition().x * Constants.PPM - 8f,
+                body.getPosition().y * Constants.PPM - 8f);
         batch.end();
     }
 
     public void jump(int force) {
+        SoundManager.jumpSound.play();
         body.applyForceToCenter(0, force, true);
     }
 
@@ -158,8 +166,22 @@ public class Player {
     }
 
     public void attack() {
+        SoundManager.hitSound.play();
         isAttacking = true;
         weaponStateTime = 0f;
+    }
+
+    public boolean isAttacking() {
+        return isAttacking;
+    }
+
+    public void die() {
+        SoundManager.loseSound.play();
+        playerState = PlayerState.DIE;
+    }
+
+    public void win() {
+        playerState = PlayerState.WIN;
     }
 
     public void dispose() {

@@ -3,12 +3,15 @@ package com.thestbar.ludumdare54.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.thestbar.ludumdare54.GameApp;
-import com.thestbar.ludumdare54.LabelStyleUtil;
+import com.thestbar.ludumdare54.utils.Constants;
+import com.thestbar.ludumdare54.utils.LabelStyleUtil;
 
 public class MainMenu implements Screen {
     private final GameApp game;
@@ -17,7 +20,7 @@ public class MainMenu implements Screen {
     private Label titleLabel;
 
     // Title animation variables
-    private float titleLabelSize = 2f;
+    private float titleLabelSize = 1.5f;
     private float animationSpeed = 0.5f;
     private boolean isAnimationStage2 = false;
     private boolean isSizeDec = true;
@@ -25,13 +28,14 @@ public class MainMenu implements Screen {
     float counter = 0;
     public MainMenu(GameApp game) {
         this.game = game;
-
+        this.game.stage = new Stage(new ScreenViewport());
+        Gdx.input.setInputProcessor(this.game.stage);
         rootTable = new Table();
         rootTable.setFillParent(true);
 //        rootTable.debug();
         this.game.stage.addActor(rootTable);
 
-        titleLabel = new Label("Ludum Dare 54", this.game.skin);
+        titleLabel = new Label("Blade Jumper", this.game.skin);
         titleLabel.setStyle(LabelStyleUtil.getLabelStyle(this.game, "title", Color.ORANGE));
         titleLabel.setFontScale(titleLabelSize);
         rootTable.add(titleLabel).row();
@@ -39,6 +43,7 @@ public class MainMenu implements Screen {
         Label nextLabel = new Label("Have fun :)", this.game.skin);
         nextLabel.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
         rootTable.add(nextLabel).padTop(50).row();
+        nextLabel.setFontScale(0.8f);
 
         startGameButton = new TextButton("Start", this.game.skin);
         rootTable.add(startGameButton).padTop(80).row();
@@ -57,11 +62,11 @@ public class MainMenu implements Screen {
         counter += delta * 10;
 
         // Animate title!
-        // Initially starting from 2f go down to 1f
+        // Initially starting from 1.5f go down to 0.8f
         if (!isAnimationStage2) {
             titleLabelSize -= delta * animationSpeed;
-            if (titleLabelSize < 1f) {
-                titleLabelSize = 1f;
+            if (titleLabelSize < 0.8f) {
+                titleLabelSize = 0.8f;
                 isAnimationStage2 = true;
                 isSizeDec = false;
                 animationSpeed = 0.1f;
@@ -72,9 +77,9 @@ public class MainMenu implements Screen {
         else {
             float factor = (isSizeDec) ? -1f : 1f;
             titleLabelSize += delta * animationSpeed * factor;
-            if (isSizeDec && titleLabelSize < 1f) {
+            if (isSizeDec && titleLabelSize < 0.8f) {
                 isSizeDec = false;
-            } else if (!isSizeDec && titleLabelSize > 1.1f) {
+            } else if (!isSizeDec && titleLabelSize > 0.85f) {
                 isSizeDec = true;
             }
         }

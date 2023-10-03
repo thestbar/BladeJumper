@@ -1,7 +1,8 @@
-package com.thestbar.ludumdare54;
+package com.thestbar.ludumdare54.utils;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.thestbar.ludumdare54.GameApp;
 
 import java.util.HashMap;
 import java.util.Map;
