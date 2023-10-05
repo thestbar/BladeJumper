@@ -18,6 +18,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.Array;
@@ -26,6 +27,7 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.thestbar.ludumdare54.*;
 import com.thestbar.ludumdare54.gameobjects.*;
 import com.thestbar.ludumdare54.listeners.ListenerClass;
+import com.thestbar.ludumdare54.managers.SoundManager;
 import com.thestbar.ludumdare54.utils.Box2DUtils;
 import com.thestbar.ludumdare54.utils.Constants;
 import com.thestbar.ludumdare54.utils.LabelStyleUtil;
@@ -40,15 +42,10 @@ public class GameScreen implements Screen {
     private TiledMap map;
     public static Player player;
     private ListenerClass listener;
-    private Texture enemiesSpritesheet;
-    private Texture powerupsSpritesheet;
     public static Array<Body> bodiesToBeDeleted;
     private MapObject levelEndPos;
-    private Texture lavasSpritesheet;
-    private Texture healthBarSpritesheet;
     private float playerDiedDeltaTime;
-    private Texture enemyBulletSpritesheet;
-    private Texture blackTex;
+    private SoundManager soundManager;
 
     // Play again UI
     private Table rootTable;
@@ -58,11 +55,32 @@ public class GameScreen implements Screen {
 
     // Title animation variables
     private float titleLabelSize = 2f;
+    private Stage uiStage;
+    private ProgressBar uiPlayerHealthBar;
 
-    // TODO - Fix bug with 2 missing colliders
     // TODO - There is a bug on double jump, when the player goes away from a platform without jumping
     public GameScreen(GameApp game) {
         this.game = game;
+
+        // Load all assets to asset manager
+        // Textures
+        game.assetManager.load("spritesheets/ld54-background.png", Texture.class);
+        game.assetManager.load("spritesheets/ld54-healrthbar-Sheet.png", Texture.class);
+        game.assetManager.load("spritesheets/ld54-enemies-Sheet.png", Texture.class);
+        game.assetManager.load("spritesheets/ld54-enemy3-bullet-Sheet.png", Texture.class);
+        game.assetManager.load("spritesheets/ld54-black-transparent.png", Texture.class);
+        game.assetManager.load("spritesheets/ld54-powerups-Sheet.png", Texture.class);
+        game.assetManager.load("spritesheets/ld54-lava-Sheet.png", Texture.class);
+        game.assetManager.load("spritesheets/ld54-mainmenu-background.png", Texture.class);
+        game.assetManager.load("spritesheets/ld54-player-Sheet.png", Texture.class);
+        // Music and sound effects
+        soundManager = new SoundManager(game.assetManager);
+
+        game.assetManager.finishLoading();
+    }
+
+    @Override
+    public void show() {
         this.game.stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(this.game.stage);
 
@@ -101,8 +119,11 @@ public class GameScreen implements Screen {
         Rectangle rectangle = ((RectangleMapObject) playerStartPos).getRectangle();
         int x = (int) rectangle.x;
         int y = (int) rectangle.y;
-        player = new Player(world, x, y);
-        camera.position.set(x, y, 10f);
+        player = new Player(game, world, x, y, soundManager);
+        camera.position.x = 143;
+        camera.position.y = 807;
+        camera.position.z = 10f;
+        camera.update();
 
         rectangle = ((RectangleMapObject) levelEndPos).getRectangle();
         x = (int) rectangle.x;
@@ -117,22 +138,15 @@ public class GameScreen implements Screen {
         levelEndPoint.getFixtureList().get(0).setUserData("level_end");
 
         // Create enemies
-        healthBarSpritesheet = new Texture(Gdx.files.internal("spritesheets/ld54-healrthbar-Sheet.png"));
-        enemiesSpritesheet = new Texture(Gdx.files.internal("spritesheets/ld54-enemies-Sheet.png"));
-        enemyBulletSpritesheet = new Texture(Gdx.files.internal("spritesheets/ld54-enemy3-bullet-Sheet.png"));
-        Enemy.createEnemies(world, map.getLayers().get("Enemies").getObjects(),
-                enemiesSpritesheet, healthBarSpritesheet, enemyBulletSpritesheet);
+        Enemy.createEnemies(game, world, map.getLayers().get("Enemies").getObjects(), soundManager);
 
         // Create powerups
-        powerupsSpritesheet = new Texture(Gdx.files.internal("spritesheets/ld54-powerups-Sheet.png"));
-        Powerup.createPowerups(world, map.getLayers().get("Powerups").getObjects(), powerupsSpritesheet);
+        Powerup.createPowerups(game, world, map.getLayers().get("Powerups").getObjects());
 
         // Create lava
-        lavasSpritesheet = new Texture(Gdx.files.internal("spritesheets/ld54-lava-Sheet.png"));
-        Lava.createLavas(world, map.getLayers().get("Lava").getObjects(), lavasSpritesheet);
+        Lava.createLavas(game, world, map.getLayers().get("Lava").getObjects());
 
         // Play again UI initialization - Is being used and as win screen
-        blackTex = new Texture(Gdx.files.internal("spritesheets/ld54-black-transparent.png"));
         rootTable = new Table();
         rootTable.setFillParent(true);
         game.stage.addActor(rootTable);
@@ -143,24 +157,50 @@ public class GameScreen implements Screen {
         rootTable.add(titleLabel).row();
         titleLabel.setFontScale(0.8f);
 
-        nextLabel = new Label("Come on, that's what you got?", this.game.skin);
+        nextLabel = new Label("\"Don't smash the keyboard, yet!\"", this.game.skin);
         nextLabel.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
         rootTable.add(nextLabel).padTop(50).row();
         nextLabel.setFontScale(0.8f);
 
         startGameButton = new TextButton("Restart", this.game.skin);
         rootTable.add(startGameButton).padTop(80).row();
-    }
 
-    @Override
-    public void show() {
+        // Build Game UI
+        uiStage = new Stage(new ScreenViewport());
+        Table uiRootTable = new Table();
+        uiRootTable.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        uiRootTable.top().left();
+        uiRootTable.setFillParent(true);
+        uiStage.addActor(uiRootTable);
+
+        uiPlayerHealthBar = new ProgressBar(0, player.maxHealthPoints, 1, false, game.skin);
+        uiPlayerHealthBar.setStyle(new ProgressBar
+                .ProgressBarStyle(game.skin.get("health", ProgressBar.ProgressBarStyle.class)));
+        uiPlayerHealthBar.setValue(player.maxHealthPoints);
+        uiRootTable.add(uiPlayerHealthBar).width(500).padTop(20).padLeft(20);
+
+//        uiRootTable.debug();
+
         listener = new ListenerClass();
         world.setContactListener(listener);
     }
 
     @Override
     public void render(float delta) {
-        ScreenUtils.clear(Constants.DEBUG_BACKGROUND_COLOR);
+        ScreenUtils.clear(Color.BLACK);
+        if (!game.assetManager.update(17)) {
+            float progress = game.assetManager.getProgress();
+            System.out.println("Loading: " + progress);
+            return;
+        }
+        if (!soundManager.isBackgroundMusicOn()) {
+            soundManager.playBackgroundMusic();
+        }
+        game.batch.begin();
+        game.batch.draw(game.assetManager.get("spritesheets/ld54-background.png", Texture.class),
+                0, 0, camera.viewportWidth * Constants.SCALE,
+                camera.viewportHeight * Constants.SCALE * 2);
+        game.batch.end();
         world.step(1/60f, 6, 2);
         inputUpdate(delta);
         cameraUpdate(delta);
@@ -194,13 +234,22 @@ public class GameScreen implements Screen {
         }
         tiledMapRenderer.setView(camera);
         tiledMapRenderer.render();
-        debugRenderer.render(world, camera.combined.scl(Constants.PPM));
+//        debugRenderer.render(world, camera.combined.scl(Constants.PPM));
 
         // Dispose unused bodies
         for (Body body : bodiesToBeDeleted) {
             world.destroyBody(body);
         }
         bodiesToBeDeleted.clear();
+
+        // Update player health bar
+        uiPlayerHealthBar.setValue(player.healthPoints);
+        // Render UI
+
+        uiStage.getViewport().apply();
+        uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
+        uiStage.draw();
+        game.stage.getViewport().apply();
 
         // In case player dies render try again screen
         // In case player wins render win screen
@@ -211,13 +260,14 @@ public class GameScreen implements Screen {
                 nextLabel.setText("Thanks for playing!");
             }
             game.batch.begin();
-            game.batch.draw(blackTex, 0, 0, camera.viewportWidth * Constants.PPM,
-                    camera.viewportHeight * Constants.PPM);
+            game.batch.draw(game.assetManager.get("spritesheets/ld54-black-transparent.png", Texture.class),
+                    0, 0, camera.viewportWidth * Constants.PPM, camera.viewportHeight * Constants.PPM);
             game.batch.end();
             game.stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
             game.stage.draw();
             if (startGameButton.isPressed()) {
                 // Remember to dispose all the static memory
+                soundManager.playSound("button");
                 disposeStaticMemory();
                 game.setScreen(new GameScreen(game));
             }
@@ -259,6 +309,7 @@ public class GameScreen implements Screen {
     }
 
     private void cameraUpdate(float delta) {
+        System.out.println(camera.position);
         Vector3 position = camera.position;
         // b = a + (b - a) * lerp
         // b = target
@@ -268,7 +319,6 @@ public class GameScreen implements Screen {
         position.y = position.y + (player.body.getPosition().y * Constants.PPM - position.y) * lerp;
         position.z = 10f;
         camera.position.set(position);
-
         camera.update();
     }
 
@@ -299,10 +349,7 @@ public class GameScreen implements Screen {
         player.dispose();
         tiledMapRenderer.dispose();
         map.dispose();
-        powerupsSpritesheet.dispose();
-        enemiesSpritesheet.dispose();
-        lavasSpritesheet.dispose();
-        enemyBulletSpritesheet.dispose();
+        game.assetManager.clear();
     }
 
     public void disposeStaticMemory() {

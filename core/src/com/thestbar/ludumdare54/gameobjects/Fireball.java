@@ -9,6 +9,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.DelayedRemovalArray;
+import com.thestbar.ludumdare54.GameApp;
 import com.thestbar.ludumdare54.utils.Box2DUtils;
 import com.thestbar.ludumdare54.utils.Constants;
 
@@ -20,14 +21,16 @@ public class Fireball {
     public static DelayedRemovalArray<Fireball> activeFireballs = new DelayedRemovalArray<>();
     public static Map<String, Fireball> fireballMap = new HashMap<>();
     public static int fireballCounter = 0;
-    private Animation<TextureRegion> animation;
+    private final Animation<TextureRegion> animation;
     private float stateTime;
-    private float ANIMATION_FRAME_DURATION = 0.2f;
-    private int dirX;
-    public Fireball(World world, Texture texture, int x, int y, boolean isRight) {
+    private final float ANIMATION_FRAME_DURATION = 0.2f;
+    private final int dirX;
+    public float damage;
+    public Fireball(GameApp game, World world, int x, int y, boolean isRight, float damage) {
         activeFireballs.add(this);
         String id = "fireball" + fireballCounter++;
         fireballMap.put(id, this);
+
         // Create fireball
         body = Box2DUtils.createBox(world, x, y, 4, 4, BodyDef.BodyType.DynamicBody);
         body.getFixtureList().get(0).setDensity(1);
@@ -41,8 +44,10 @@ public class Fireball {
         body.applyForceToCenter(dirX * 10f, -Constants.GRAVITATIONAL_CONSTANT.y, true);
 
         stateTime = 0;
-        TextureRegion[] tmp = TextureRegion.split(texture, 16, 16)[0];
+        TextureRegion[] tmp = TextureRegion.split(game.assetManager
+                .get("spritesheets/ld54-enemy3-bullet-Sheet.png", Texture.class), 16, 16)[0];
         animation = new Animation<>(ANIMATION_FRAME_DURATION, tmp);
+        this.damage = damage;
     }
 
     public void render(SpriteBatch batch) {

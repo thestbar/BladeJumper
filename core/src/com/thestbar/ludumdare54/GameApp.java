@@ -2,7 +2,10 @@ package com.thestbar.ludumdare54;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -16,6 +19,7 @@ public class GameApp extends Game {
 	public ShapeRenderer renderer;
 	public Stage stage;
 	public Skin skin;
+	public AssetManager assetManager;
 	public final static boolean IS_DEV_ENV = false;
 	
 	@Override
@@ -24,7 +28,7 @@ public class GameApp extends Game {
 		skin = new Skin(Gdx.files.internal("skins/pixthulu/pixthulhu-ui.json"));
 		renderer = new ShapeRenderer();
 		renderer.setAutoShapeType(true);
-		SoundManager.startMusic();
+		assetManager = new AssetManager();
 		this.setScreen((IS_DEV_ENV) ? new GameScreen(this) : new MainMenu(this));
 	}
 
@@ -39,6 +43,6 @@ public class GameApp extends Game {
 		renderer.dispose();
 		stage.dispose();
 		skin.dispose();
-		SoundManager.dispose();
+		assetManager.dispose();
 	}
 }

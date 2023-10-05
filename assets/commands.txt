@@ -11,7 +11,8 @@ Build smaller runtime
 jlink --add-modules ALL-MODULE-PATH --output ./runtime --strip-debug --no-man-pages --no-header-files --compress=2
 
 Build application
-jpackage --dest ./dist --input ./libs --name "Blade Jumper" --main-class com.thestbar.ludumdare54.DesktopLauncher --main-jar ./desktop-1.0.jar --runtime-image ./runtime --java-options -XstartOnFirstThread
+jpackage --dest ./dist --input ./libs --name "Blade Jumper" --main-class com.thestbar.ludumdare54.DesktopLauncher --main-jar ./desktop-1.0.jar --runtime-image ./runtime --java-options -XstartOnFirstThread --icon (path of the icns file)
+
 
 Note: The first time a MacOS user tries to launch the application it will crash and OS will try to delete
       the file. The message will look like "AppName is damages and can't be opened. You should move it to the Bin".
@@ -20,3 +21,8 @@ Note: The first time a MacOS user tries to launch the application it will crash 
       from an identified developer" and below this message a button with the label Open Anyway exists. Click this button
       and try again to open the Application. It is mandatory on the same Security section in Settings, the user to have
       selected under "Allow application downloaded from" the value "App Store and identified developers".
+
+When you are building for Windows is the same things except for that you do not add the --java-option -XstartOnFirstThread
+on the jpackage command and instead of .icns file you generate .ico file. Keep in your mind that you should create a png
+with 256 x 256 or 512 x 512 resolution, in order for the online generators to work and generate the files that you need
+for the system icons.

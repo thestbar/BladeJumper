@@ -1,55 +1,48 @@
 package com.thestbar.ludumdare54.managers;
 
-import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 
-public final class SoundManager {
-    private static Music backgroundMusic;
-    static {
-        backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("music/ld54-song.wav"));
+public class SoundManager {
+    private final AssetManager assetManager;
+    private boolean isBackgroundMusicOn = false;
+
+    public SoundManager(AssetManager assetManager) {
+        this.assetManager = assetManager;
+        loadAssetsToAssetManager();
     }
 
-    public static Sound hitSound = Gdx.audio.newSound(Gdx.files.internal("sfx/hit.wav"));
-    public static Sound hurtSound = Gdx.audio.newSound(Gdx.files.internal("sfx/hurt.wav"));
-    public static Sound jumpSound = Gdx.audio.newSound(Gdx.files.internal("sfx/jump.wav"));
-    public static Sound loseSound = Gdx.audio.newSound(Gdx.files.internal("sfx/lose.wav"));
-    public static Sound walkSound = Gdx.audio.newSound(Gdx.files.internal("sfx/walk.wav"));
-
-    private static long activeWalkSoundId = -1;
-
-    public static void startMusic() {
-        if (backgroundMusic.isPlaying()) {
+    public void playBackgroundMusic() {
+        if (isBackgroundMusicOn) {
             return;
         }
-        backgroundMusic.setVolume(0.1f);
-        backgroundMusic.setLooping(true);
+        isBackgroundMusicOn = true;
+        Music backgroundMusic = assetManager.get("music/ld54-song.wav", Music.class);
         backgroundMusic.play();
+        backgroundMusic.setLooping(true);
+        backgroundMusic.setVolume(0.1f);
     }
 
-    public static void restartMusic() {
-        if (!backgroundMusic.isPlaying()) {
-            return;
-        }
-        backgroundMusic.stop();
-        SoundManager.startMusic();
+    public void playSound(String soundName) {
+        String fileName = "sfx/" + soundName + ".wav";
+        Sound sound = assetManager.get(fileName, Sound.class);
+        sound.play();
     }
 
-    public static void stopMusic() {
-        if (backgroundMusic.isPlaying()) {
-            backgroundMusic.stop();
-        }
+    public boolean isBackgroundMusicOn() {
+        return isBackgroundMusicOn;
     }
 
-    public static void dispose() {
-        activeWalkSoundId = -1;
-        backgroundMusic.dispose();
-        hitSound.dispose();
-        hurtSound.dispose();
-        jumpSound.dispose();
-        loseSound.dispose();
-        walkSound.dispose();
+    private void loadAssetsToAssetManager() {
+        assetManager.load("music/ld54-song.wav", Music.class);
+        assetManager.load("sfx/button.wav", Sound.class);
+        assetManager.load("sfx/hit.wav", Sound.class);
+        assetManager.load("sfx/hurt.wav", Sound.class);
+        assetManager.load("sfx/jump.wav", Sound.class);
+        assetManager.load("sfx/lose.wav", Sound.class);
+        assetManager.load("sfx/powerup.wav", Sound.class);
+        assetManager.load("sfx/walk.wav", Sound.class);
+        assetManager.load("sfx/win.wav", Sound.class);
     }
-
-
 }

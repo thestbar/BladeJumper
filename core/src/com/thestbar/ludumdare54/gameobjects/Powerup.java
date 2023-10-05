@@ -13,23 +13,23 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.DelayedRemovalArray;
+import com.thestbar.ludumdare54.GameApp;
 import com.thestbar.ludumdare54.utils.Box2DUtils;
 import com.thestbar.ludumdare54.utils.Constants;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class Powerup {
     public Body body;
     public int powerupType;
-    private Animation<TextureRegion> animation;
+    private final Animation<TextureRegion> animation;
     private float stateTime;
     public static int powerups = 0;
     private final float ANIMATION_FRAME_DURATION = 0.2f;
     public static Map<String, Powerup> powerupMap = new HashMap<>();
     public static DelayedRemovalArray<Powerup> powerupsArray = new DelayedRemovalArray<>();;
 
-    public Powerup(World world, Texture texture, int powerupType, int x, int y) {
+    public Powerup(GameApp game, World world, int powerupType, int x, int y) {
         this.powerupType = powerupType;
 
         String id = "powerup" + (powerups++);
@@ -43,7 +43,8 @@ public class Powerup {
         body.getFixtureList().get(0).setUserData(id);
         body.getFixtureList().get(0).setSensor(true);
 
-        TextureRegion[][] tmp = TextureRegion.split(texture, 16, 16);
+        TextureRegion[][] tmp = TextureRegion.split(game.assetManager
+                .get("spritesheets/ld54-powerups-Sheet.png", Texture.class), 16, 16);
 
         animation = new Animation<>(ANIMATION_FRAME_DURATION, tmp[powerupType]);
     }
@@ -58,16 +59,11 @@ public class Powerup {
         batch.end();
     }
 
-    public void consume(Player player) {
-
-    }
-
-    public static void createPowerups(World world, MapObjects objects,
-                                     Texture powerupsSpritesheet) {
+    public static void createPowerups(GameApp game, World world, MapObjects objects) {
         for (MapObject object : objects) {
             Rectangle rectangle = ((RectangleMapObject) object).getRectangle();
             int powerupType = Integer.parseInt(object.getName()) - 1;
-            Powerup.powerupsArray.add(new Powerup(world, powerupsSpritesheet,
+            Powerup.powerupsArray.add(new Powerup(game, world,
                     powerupType, (int) rectangle.x, (int) (rectangle.y + 8)));
         }
     }

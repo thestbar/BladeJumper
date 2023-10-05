@@ -1,27 +1,29 @@
 package com.thestbar.ludumdare54.gameobjects;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.thestbar.ludumdare54.GameApp;
 import com.thestbar.ludumdare54.managers.SoundManager;
 import com.thestbar.ludumdare54.utils.Box2DUtils;
 import com.thestbar.ludumdare54.utils.Constants;
 
 public class Player {
+    public GameApp game;
     public Body body;
-    private Texture texture;
-    private Animation<TextureRegion> restAnimation;
-    private Animation<TextureRegion> moveLeftAnimation;
-    private Animation<TextureRegion> moveRightAnimation;
-    private Animation<TextureRegion> dieAnimation;
-    private Animation<TextureRegion> weaponLeftAnimation;
-    private Animation<TextureRegion> weaponRightAnimation;
-    private Animation<TextureRegion> weaponAttackLeftAnimation;
-    private Animation<TextureRegion> weaponAttackRightAnimation;
+    private final Animation<TextureRegion> restAnimation;
+    private final Animation<TextureRegion> moveLeftAnimation;
+    private final Animation<TextureRegion> moveRightAnimation;
+    private final Animation<TextureRegion> dieAnimation;
+    private final Animation<TextureRegion> weaponLeftAnimation;
+    private final Animation<TextureRegion> weaponRightAnimation;
+    private final Animation<TextureRegion> weaponAttackLeftAnimation;
+    private final Animation<TextureRegion> weaponAttackRightAnimation;
     private float stateTime;
     public PlayerState playerState = PlayerState.REST;
     private boolean isAttacking;
@@ -30,14 +32,19 @@ public class Player {
     public float playerDamage;
     public float maxHealthPoints;
     public float healthPoints;
+    private SoundManager soundManager;
 
-    public Player(World world, int x, int y) {
+    public Player(GameApp game, World world, int x, int y, SoundManager soundManager) {
+        this.game = game;
+        this.soundManager = soundManager;
         // Create player
         body = Box2DUtils.createBox(world, x, y, 10, 14, BodyDef.BodyType.DynamicBody);
         body.getFixtureList().get(0).setDensity(1);
         body.getFixtureList().get(0).setFriction(0);
         body.getFixtureList().get(0).getFilterData().categoryBits = Constants.BIT_PLAYER;
-        body.getFixtureList().get(0).getFilterData().maskBits = Constants.BIT_GROUND | Constants.BIT_POWERUP | Constants.BIT_ENEMY_SENSOR | Constants.BIT_LAVA | Constants.BIT_BULLET | Constants.BIT_LEVEL_END;
+        body.getFixtureList().get(0).getFilterData().maskBits = Constants.BIT_GROUND |
+                Constants.BIT_ENEMY_ATTACK_SENSOR | Constants.BIT_POWERUP | Constants.BIT_ENEMY_SENSOR |
+                Constants.BIT_LAVA | Constants.BIT_BULLET | Constants.BIT_LEVEL_END | Constants.BIT_GROUND_SENSOR;
         body.getFixtureList().get(0).setUserData("player");
 
         // Create player ground sensor
@@ -51,9 +58,8 @@ public class Player {
         body.createFixture(fixtureDef).setUserData("ground_sensor");
         shape.dispose();
 
-        texture = new Texture(Gdx.files.internal("spritesheets/ld54-player-Sheet.png"));
-
-        TextureRegion[][] tmp = TextureRegion.split(texture, 16, 16);
+        TextureRegion[][] tmp = TextureRegion.split(game.assetManager
+                .get("spritesheets/ld54-player-Sheet.png", Texture.class), 16, 16);
 
         restAnimation = new Animation<>(0.2f, tmp[0]);
         moveRightAnimation = new Animation<>(0.2f, tmp[1]);
@@ -157,7 +163,7 @@ public class Player {
     }
 
     public void jump(int force) {
-        SoundManager.jumpSound.play();
+        soundManager.playSound("jump");
         body.applyForceToCenter(0, force, true);
     }
 
@@ -166,7 +172,7 @@ public class Player {
     }
 
     public void attack() {
-        SoundManager.hitSound.play();
+        soundManager.playSound("hit");
         isAttacking = true;
         weaponStateTime = 0f;
     }
@@ -176,15 +182,30 @@ public class Player {
     }
 
     public void die() {
-        SoundManager.loseSound.play();
+        soundManager.playSound("lose");
         playerState = PlayerState.DIE;
+        healthPoints = 0f;
     }
 
     public void win() {
+        soundManager.playSound("win");
         playerState = PlayerState.WIN;
     }
 
-    public void dispose() {
-        texture.dispose();
+    public void addPowerUp(Powerup powerup) {
+        soundManager.playSound("powerup");
     }
+
+    public void damagePlayer(float damage) {
+        if (playerState == PlayerState.DIE || playerState == PlayerState.WIN) {
+            return;
+        }
+        soundManager.playSound("hurt");
+        healthPoints = Math.max(0, healthPoints - damage);
+        if (healthPoints == 0) {
+            die();
+        }
+    }
+
+    public void dispose() {}
 }

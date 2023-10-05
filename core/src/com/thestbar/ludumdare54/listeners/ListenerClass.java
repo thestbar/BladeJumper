@@ -1,6 +1,7 @@
 package com.thestbar.ludumdare54.listeners;
 
 import com.badlogic.gdx.physics.box2d.*;
+import com.thestbar.ludumdare54.gameobjects.Enemy;
 import com.thestbar.ludumdare54.gameobjects.Fireball;
 import com.thestbar.ludumdare54.gameobjects.Powerup;
 import com.thestbar.ludumdare54.screens.GameScreen;
@@ -14,7 +15,7 @@ public class ListenerClass implements ContactListener {
         Fixture fa = contact.getFixtureA();
         Fixture fb = contact.getFixtureB();
 
-        System.out.println("fa: " + fa.getUserData() + ", fb: " + fb.getUserData());
+//        System.out.println("fa: " + fa.getUserData() + ", fb: " + fb.getUserData());
         if (fa.getUserData() != null && fb.getUserData() != null && (
            (fa.getUserData().equals("lava") && fb.getUserData().equals("player")) ||
            (fa.getUserData().equals("player") && fb.getUserData().equals("lava")))) {
@@ -37,12 +38,13 @@ public class ListenerClass implements ContactListener {
                 powerupId = (String) fa.getUserData();
             }
             Powerup powerup = Powerup.powerupMap.get(powerupId);
+            GameScreen.player.addPowerUp(powerup);
             GameScreen.bodiesToBeDeleted.add(powerup.body);
             Powerup.powerupsArray.removeValue(powerup, true);
         }
         if (fa.getUserData() != null && fb.getUserData() != null && (
            (fa.getUserData().equals("player") && ((String) fb.getUserData()).contains("enemy_sensor")) ||
-           (fa.getUserData().equals("enemy_sensor") && ((String) fb.getUserData()).contains("player")))) {
+           (fb.getUserData().equals("player") && ((String) fa.getUserData()).contains("enemy_sensor")))) {
             if (fa.getUserData().equals("player")) {
                 enemyIdBeingHit = Integer.parseInt(((String) fb.getUserData()).substring(12));
             } else {
@@ -69,6 +71,34 @@ public class ListenerClass implements ContactListener {
                 GameScreen.player.win();
             }
         }
+        if (fa.getUserData() != null && fb.getUserData() != null && (
+           (fa.getUserData().equals("player") && ((String) fb.getUserData()).contains("fireball")) ||
+           (((String) fa.getUserData()).contains("fireball") && fb.getUserData().equals("player")))) {
+            String fireballId;
+            if (fa.getUserData().equals("player")) {
+                fireballId = fb.getUserData().toString();
+            } else {
+                fireballId = fa.getUserData().toString();
+            }
+            Fireball fireball = Fireball.fireballMap.get(fireballId);
+            GameScreen.bodiesToBeDeleted.add(fireball.body);
+            Fireball.activeFireballs.removeValue(fireball, true);
+            // Damage player
+            GameScreen.player.damagePlayer(fireball.damage);
+        }
+        if (fa.getUserData() != null && fb.getUserData() != null && (
+           (fa.getUserData().equals("player") && ((String) fb.getUserData()).contains("enemy_attack_sensor")) ||
+           (((String) fa.getUserData()).contains("enemy_attack_sensor") && fb.getUserData().equals("player")))) {
+            String enemyId;
+            if (fa.getUserData().equals("player")) {
+                enemyId = fb.getUserData().toString().substring(19);
+            } else {
+                enemyId = fa.getUserData().toString().substring(19);
+            }
+            enemyId = "enemy" + enemyId;
+            Enemy enemy = Enemy.enemiesMap.get(enemyId);
+            enemy.enableAttackToPlayer();
+        }
     }
 
     @Override
@@ -85,6 +115,19 @@ public class ListenerClass implements ContactListener {
            (fa.getUserData().equals("player") && ((String) fb.getUserData()).contains("enemy_sensor")) ||
            (fa.getUserData().equals("enemy_sensor") && ((String) fb.getUserData()).contains("player")))) {
             enemyIdBeingHit = -1;
+        }
+        if (fa.getUserData() != null && fb.getUserData() != null && (
+                (fa.getUserData().equals("player") && ((String) fb.getUserData()).contains("enemy_attack_sensor")) ||
+                        (((String) fa.getUserData()).contains("enemy_attack_sensor") && fb.getUserData().equals("player")))) {
+            String enemyId;
+            if (fa.getUserData().equals("player")) {
+                enemyId = fb.getUserData().toString().substring(19);
+            } else {
+                enemyId = fa.getUserData().toString().substring(19);
+            }
+            enemyId = "enemy" + enemyId;
+            Enemy enemy = Enemy.enemiesMap.get(enemyId);
+            enemy.disableAttackToPlayer();
         }
     }
 

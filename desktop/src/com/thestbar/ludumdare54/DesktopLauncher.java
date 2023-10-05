@@ -9,7 +9,7 @@ public class DesktopLauncher {
 	public static void main (String[] arg) {
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
 		config.setForegroundFPS(60);
-		config.setTitle("LudumDare54");
+		config.setTitle("Blade Jumper");
 //		config.setFullscreenMode(Lwjgl3ApplicationConfiguration.getDisplayMode());
 		config.setWindowedMode(1080 * Constants.SCREEN_SIZE_MULTIPLIER, 700 * Constants.SCREEN_SIZE_MULTIPLIER);
 		config.setResizable(false);

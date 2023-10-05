@@ -12,56 +12,71 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Array;
+import com.thestbar.ludumdare54.GameApp;
 import com.thestbar.ludumdare54.managers.SoundManager;
 import com.thestbar.ludumdare54.screens.GameScreen;
 import com.thestbar.ludumdare54.utils.Box2DUtils;
 import com.thestbar.ludumdare54.utils.Constants;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class Enemy {
+    public GameApp game;
+    private SoundManager soundManager;
     public Body body;
     public int enemyType;
-    private Animation<TextureRegion> restAnimation;
-    private Animation<TextureRegion> attackAnimation;
-    private Animation<TextureRegion> flippedRestAnimation;
-    private Animation<TextureRegion> flippedAttackAnimation;
+    private final Animation<TextureRegion> restAnimation;
+    private final Animation<TextureRegion> attackAnimation;
+    private final Animation<TextureRegion> flippedRestAnimation;
+    private final Animation<TextureRegion> flippedAttackAnimation;
     private float stateTime;
     public EnemyState enemyState;
     public static int enemies = 0;
-    private final float ANIMATION_FRAME_DURATION = 0.2f;
+    private final float ANIMATION_FRAME_DURATION = 0.3f;
     public float range;
     public static Map<String, Enemy> enemiesMap = new HashMap<>();
     public static Array<Enemy> enemiesArray = new Array<>();
     public float healthPoints;
-    private float maxHealthPoints;
-    private TextureRegion[] healthBarTextures;
-    private Texture enemyBulletSpritesheet;
+    private final float maxHealthPoints;
+    public float damage;
+    private final TextureRegion[] healthBarTextures;
     private float timeSinceLastRangeAttack;
-    private World world;
+    private final World world;
+    private boolean isAttackToPlayerEnabled;
+    private final boolean isEnemyRanged;
+    private float timeSinceLastMeleeAttack;
 
-    public Enemy(World world, int enemyType, Texture texture, int x, int y, float range,
-                 Texture healthBarSpritesheet, Texture enemyBulletSpritesheet) {
-        this.enemyBulletSpritesheet = enemyBulletSpritesheet;
+    public Enemy(GameApp game, World world, int enemyType, int x, int y, float range, SoundManager soundManager) {
+        this.game = game;
+        this.soundManager = soundManager;
         this.enemyType = enemyType;
         this.range = range;
         this.world = world;
         switch (enemyType) {
             case 0:
                 healthPoints = 200;
+                damage = 10;
+                isEnemyRanged = false;
                 break;
             case 1:
                 healthPoints = 150;
+                damage = 15;
+                isEnemyRanged = false;
                 break;
             case 2:
                 healthPoints = 80;
+                damage = 20;
+                isEnemyRanged = false;
                 break;
             case 3:
                 healthPoints = 60;
+                damage = 35;
+                isEnemyRanged = true;
                 break;
             default:
                 healthPoints = 0;
+                damage = 0;
+                isEnemyRanged = false;
                 break;
         }
         maxHealthPoints = healthPoints;
@@ -73,7 +88,7 @@ public class Enemy {
         body.getFixtureList().get(0).setDensity(1);
         body.getFixtureList().get(0).setFriction(0);
         body.getFixtureList().get(0).getFilterData().categoryBits = Constants.BIT_ENEMY;
-        body.getFixtureList().get(0).getFilterData().maskBits = Constants.BIT_GROUND | Constants.BIT_PLAYER;
+        body.getFixtureList().get(0).getFilterData().maskBits = Constants.BIT_GROUND;
         body.getFixtureList().get(0).setUserData(id);
 
         // Create enemy sensor (hit box)
@@ -88,9 +103,23 @@ public class Enemy {
         body.createFixture(fixtureDef).setUserData(sensorId);
         shape.dispose();
 
-        TextureRegion[][] tmp = TextureRegion.split(texture, 16, 16);
+        // Create enemy attack sensor
+        String attackSensorId = "enemy_attack_sensor" + enemies;
+        shape = new PolygonShape();
+        shape.setAsBox(10 / Constants.PPM, 8 / Constants.PPM, new Vector2(0, 0), 0);
+        fixtureDef = new FixtureDef();
+        fixtureDef.shape = shape;
+        fixtureDef.filter.categoryBits = Constants.BIT_ENEMY_ATTACK_SENSOR;
+        fixtureDef.filter.maskBits = Constants.BIT_PLAYER;
+        fixtureDef.isSensor = true;
+        body.createFixture(fixtureDef).setUserData(attackSensorId);
+        shape.dispose();
 
-        TextureRegion[][] tmpFlipped = TextureRegion.split(texture, 16, 16);
+        TextureRegion[][] tmp = TextureRegion.split(game.assetManager
+                .get("spritesheets/ld54-enemies-Sheet.png", Texture.class), 16, 16);
+
+        TextureRegion[][] tmpFlipped = TextureRegion.split(game.assetManager
+                .get("spritesheets/ld54-enemies-Sheet.png", Texture.class), 16, 16);
 
         for (int i = 0; i < 4; ++i) {
             tmpFlipped[2 * enemyType][i].flip(true, false);
@@ -106,9 +135,12 @@ public class Enemy {
         enemyState = EnemyState.REST;
 
         // Create health bar
-        healthBarTextures = TextureRegion.split(healthBarSpritesheet, 16, 16)[0];
+        healthBarTextures = TextureRegion.split(game.assetManager
+                .get("spritesheets/ld54-healrthbar-Sheet.png", Texture.class), 16, 16)[0];
 
         timeSinceLastRangeAttack = 0;
+        isAttackToPlayerEnabled = false;
+        timeSinceLastMeleeAttack = 0;
     }
 
     public enum EnemyState {
@@ -123,8 +155,8 @@ public class Enemy {
             timeSinceLastRangeAttack += Gdx.graphics.getDeltaTime();
             if (timeSinceLastRangeAttack >= 10 * ANIMATION_FRAME_DURATION) {
                 timeSinceLastRangeAttack = 0;
-                new Fireball(world, enemyBulletSpritesheet, (int) (body.getPosition().x * Constants.PPM),
-                        (int) (body.getPosition().y * Constants.PPM), flip);
+                new Fireball(game, world, (int) (body.getPosition().x * Constants.PPM),
+                        (int) (body.getPosition().y * Constants.PPM), flip, damage);
             }
         }
         if (healthPoints == 0) {
@@ -151,25 +183,52 @@ public class Enemy {
         batch.draw(currentFrame, x, y);
         batch.draw(healthBarTextures[textureIndex], x, y + 16);
         batch.end();
+
+        // Check if player is close and damage them
+        if (isAttackToPlayerEnabled && !isEnemyRanged) {
+            timeSinceLastMeleeAttack += Gdx.graphics.getDeltaTime();
+            if (timeSinceLastMeleeAttack >= ANIMATION_FRAME_DURATION) {
+                timeSinceLastMeleeAttack = 0;
+                int floorOfStateTime = (int) Math.floor(stateTime);
+                float decimalOfStateTime = stateTime - floorOfStateTime;
+                floorOfStateTime %= 4;
+                float animationStateTimeInLoop = floorOfStateTime + decimalOfStateTime;
+                boolean attackPlayer = animationStateTimeInLoop < 2.5f * ANIMATION_FRAME_DURATION &&
+                        animationStateTimeInLoop > 1.5f * ANIMATION_FRAME_DURATION;
+                if (attackPlayer) {
+                    GameScreen.player.damagePlayer(damage);
+                }
+            }
+        }
     }
 
     public void attack() {
+//        SoundManager.hitSound.play();
         enemyState = EnemyState.ATTACK;
     }
 
     public void hit(float damage) {
-        SoundManager.hurtSound.play();
+        soundManager.playSound("hurt");
         healthPoints = Math.max(0, healthPoints - damage);
     }
 
-    public static void createEnemies(World world, MapObjects objects, Texture enemiesSpritesheet,
-                                     Texture healthBarSpritesheet, Texture enemyBulletSpritesheet) {
+    public void enableAttackToPlayer() {
+        isAttackToPlayerEnabled = true;
+        timeSinceLastMeleeAttack = ANIMATION_FRAME_DURATION;
+    }
+
+    public void disableAttackToPlayer() {
+        isAttackToPlayerEnabled = false;
+        timeSinceLastMeleeAttack = ANIMATION_FRAME_DURATION;
+    }
+
+    public static void createEnemies(GameApp game, World world, MapObjects objects, SoundManager soundManager) {
         for (MapObject object : objects) {
             Rectangle rectangle = ((RectangleMapObject) object).getRectangle();
             int enemyType = Integer.parseInt(object.getName()) - 1;
             float enemyRange = (enemyType == 3) ? 320 / Constants.PPM : 32 / Constants.PPM;
-            Enemy.enemiesArray.add(new Enemy(world, enemyType, enemiesSpritesheet, (int) rectangle.x,
-                    (int) rectangle.y, enemyRange, healthBarSpritesheet, enemyBulletSpritesheet));
+            Enemy.enemiesArray.add(new Enemy(game, world, enemyType, (int) rectangle.x,
+                    (int) rectangle.y, enemyRange, soundManager));
         }
     }
 }

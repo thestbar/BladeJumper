@@ -3,6 +3,7 @@ package com.thestbar.ludumdare54.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -10,12 +11,12 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.thestbar.ludumdare54.GameApp;
-import com.thestbar.ludumdare54.utils.Constants;
+import com.thestbar.ludumdare54.managers.SoundManager;
 import com.thestbar.ludumdare54.utils.LabelStyleUtil;
 
 public class MainMenu implements Screen {
     private final GameApp game;
-    private Table rootTable;
+    private SoundManager soundManager;
     private TextButton startGameButton;
     private Label titleLabel;
 
@@ -25,12 +26,22 @@ public class MainMenu implements Screen {
     private boolean isAnimationStage2 = false;
     private boolean isSizeDec = true;
 
-    float counter = 0;
     public MainMenu(GameApp game) {
         this.game = game;
+
+        // Load textures
+        game.assetManager.load("spritesheets/ld54-mainmenu-background.png", Texture.class);
+        game.assetManager.load("spritesheets/ld54-black-transparent.png", Texture.class);
+
+        // Music and sound effects
+        soundManager = new SoundManager(game.assetManager);
+    }
+
+    @Override
+    public void show() {
         this.game.stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(this.game.stage);
-        rootTable = new Table();
+        Table rootTable = new Table();
         rootTable.setFillParent(true);
 //        rootTable.debug();
         this.game.stage.addActor(rootTable);
@@ -40,26 +51,43 @@ public class MainMenu implements Screen {
         titleLabel.setFontScale(titleLabelSize);
         rootTable.add(titleLabel).row();
 
-        Label nextLabel = new Label("Have fun :)", this.game.skin);
-        nextLabel.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
-        rootTable.add(nextLabel).padTop(50).row();
-        nextLabel.setFontScale(0.8f);
+        Label label1 = new Label("Use A and D to move!", this.game.skin);
+        label1.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
+        rootTable.add(label1).padTop(50).row();
+        label1.setFontScale(0.8f);
+        Label label2 = new Label("W to (double) jump!", this.game.skin);
+        label2.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
+        rootTable.add(label2).row();
+        label2.setFontScale(0.8f);
+        Label label3 = new Label("Space to attack enemies!", this.game.skin);
+        label3.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
+        rootTable.add(label3).row();
+        label3.setFontScale(0.8f);
 
         startGameButton = new TextButton("Start", this.game.skin);
         rootTable.add(startGameButton).padTop(80).row();
     }
 
     @Override
-    public void show() {
-
-    }
-
-    @Override
     public void render(float delta) {
         ScreenUtils.clear(0, 0, 0, 1);
+        if (!game.assetManager.update(17)) {
+            float progress = game.assetManager.getProgress();
+            System.out.println("Loading: " + progress);
+            return;
+        }
+        if (!soundManager.isBackgroundMusicOn()) {
+            soundManager.playBackgroundMusic();
+        }
+        game.batch.begin();
+        game.batch.draw(game.assetManager.get("spritesheets/ld54-mainmenu-background.png", Texture.class),
+                0, 0, game.stage.getWidth(), game.stage.getHeight());
+        game.batch.draw(game.assetManager.get("spritesheets/ld54-black-transparent.png", Texture.class),
+                0, 0, game.stage.getWidth(), game.stage.getHeight());
+        game.batch.end();
+
         game.stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         game.stage.draw();
-        counter += delta * 10;
 
         // Animate title!
         // Initially starting from 1.5f go down to 0.8f
@@ -87,6 +115,7 @@ public class MainMenu implements Screen {
         titleLabel.setFontScale(titleLabelSize);
 
         if (startGameButton.isPressed()) {
+            soundManager.playSound("button");
             game.setScreen(new GameScreen(game));
         }
     }
@@ -113,6 +142,6 @@ public class MainMenu implements Screen {
 
     @Override
     public void dispose() {
-
+        game.assetManager.clear();
     }
 }
