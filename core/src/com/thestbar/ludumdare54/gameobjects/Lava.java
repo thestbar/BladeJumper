@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.MapObjects;
@@ -22,7 +23,7 @@ public class Lava {
     private final float ANIMATION_FRAME_DURATION = 0.2f;
     public static Array<Lava> lavaArray = new Array<>();
 
-    public Lava(GameApp game, World world, int x, int y) {
+    public Lava(GameApp game, World world, int x, int y, TextureRegion[] textureRegions) {
         lavaArray.add(this);
         body = Box2DUtils.createBox(world, x, y, 16, 10, BodyDef.BodyType.StaticBody);
         body.getFixtureList().get(0).setDensity(1);
@@ -30,9 +31,8 @@ public class Lava {
         body.getFixtureList().get(0).getFilterData().categoryBits = Constants.BIT_LAVA;
         body.getFixtureList().get(0).getFilterData().maskBits = Constants.BIT_PLAYER;
         body.getFixtureList().get(0).setUserData("lava");
-        TextureRegion[] tmp = TextureRegion.split(game.assetManager
-                .get("spritesheets/ld54-lava-Sheet.png", Texture.class), 16, 16)[0];
-        animation = new Animation<>(ANIMATION_FRAME_DURATION, tmp);
+
+        animation = new Animation<>(ANIMATION_FRAME_DURATION, textureRegions);
     }
 
     public void render(SpriteBatch batch) {
@@ -46,11 +46,16 @@ public class Lava {
     }
 
     public static void createLavas(GameApp game, World world, MapObjects objects) {
+        TextureAtlas textureAtlas = game.assetManager.get("spritesheets/atlas/ld54.atlas", TextureAtlas.class);
+        TextureRegion[] tmp = new TextureRegion[4];
+        for (int i = 0; i < 4; ++i) {
+            String regionName = "ld54-lava-Sheet" + (i + 1);
+            tmp[i] = textureAtlas.findRegion(regionName);
+        }
         for (MapObject object : objects) {
-//            System.out.println(object.getClass());
             Rectangle rectangle = ((RectangleMapObject) object).getRectangle();
             new Lava(game, world,
-                    (int) (rectangle.x + 8), (int) (rectangle.y + 8));
+                    (int) (rectangle.x + 8), (int) (rectangle.y + 8), tmp);
         }
     }
 }

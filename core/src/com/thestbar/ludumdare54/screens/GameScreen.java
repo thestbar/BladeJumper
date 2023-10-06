@@ -6,6 +6,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
@@ -63,16 +64,11 @@ public class GameScreen implements Screen {
         this.game = game;
 
         // Load all assets to asset manager
-        // Textures
+        // Textures (Everything is inside the atlas
+        game.assetManager.load("spritesheets/atlas/ld54.atlas", TextureAtlas.class);
         game.assetManager.load("spritesheets/ld54-background.png", Texture.class);
-        game.assetManager.load("spritesheets/ld54-healrthbar-Sheet.png", Texture.class);
-        game.assetManager.load("spritesheets/ld54-enemies-Sheet.png", Texture.class);
-        game.assetManager.load("spritesheets/ld54-enemy3-bullet-Sheet.png", Texture.class);
         game.assetManager.load("spritesheets/ld54-black-transparent.png", Texture.class);
-        game.assetManager.load("spritesheets/ld54-powerups-Sheet.png", Texture.class);
-        game.assetManager.load("spritesheets/ld54-lava-Sheet.png", Texture.class);
-        game.assetManager.load("spritesheets/ld54-mainmenu-background.png", Texture.class);
-        game.assetManager.load("spritesheets/ld54-player-Sheet.png", Texture.class);
+
         // Music and sound effects
         soundManager = new SoundManager(game.assetManager);
 
@@ -100,7 +96,7 @@ public class GameScreen implements Screen {
         // Remember also to set the "image source" attribute of the tmx file
         // to "image source="../../../spritesheets/ld54-spritesheet.png".
         // This is because we want the tmx file to point to the sprite sheet.
-        map = new TmxMapLoader().load("maps/level0/tiled/Level_0_v8.tmx");
+        map = new TmxMapLoader().load("maps/level0/Level_0_v9.tmx");
         tiledMapRenderer = new OrthogonalTiledMapRenderer(map);
 
         TiledObjectUtil.parseTiledObjectLayer(world, map.getLayers().get("colliders").getObjects());
@@ -309,7 +305,7 @@ public class GameScreen implements Screen {
     }
 
     private void cameraUpdate(float delta) {
-        System.out.println(camera.position);
+//        System.out.println(camera.position);
         Vector3 position = camera.position;
         // b = a + (b - a) * lerp
         // b = target

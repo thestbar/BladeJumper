@@ -5,6 +5,7 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
@@ -58,8 +59,15 @@ public class Player {
         body.createFixture(fixtureDef).setUserData("ground_sensor");
         shape.dispose();
 
-        TextureRegion[][] tmp = TextureRegion.split(game.assetManager
-                .get("spritesheets/ld54-player-Sheet.png", Texture.class), 16, 16);
+        TextureAtlas textureAtlas = game.assetManager.get("spritesheets/atlas/ld54.atlas", TextureAtlas.class);
+        TextureRegion[][] tmp = new TextureRegion[8][4];
+        for (int i = 0; i < 8; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                int index = 4 * i + j + 1;
+                String regionName = "ld54-player-Sheet" + index;
+                tmp[i][j] = textureAtlas.findRegion(regionName);
+            }
+        }
 
         restAnimation = new Animation<>(0.2f, tmp[0]);
         moveRightAnimation = new Animation<>(0.2f, tmp[1]);

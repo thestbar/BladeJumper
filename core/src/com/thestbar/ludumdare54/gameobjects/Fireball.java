@@ -26,7 +26,8 @@ public class Fireball {
     private final float ANIMATION_FRAME_DURATION = 0.2f;
     private final int dirX;
     public float damage;
-    public Fireball(GameApp game, World world, int x, int y, boolean isRight, float damage) {
+    public Fireball(GameApp game, World world, int x, int y, boolean isRight,
+                    float damage, TextureRegion[] textureRegions) {
         activeFireballs.add(this);
         String id = "fireball" + fireballCounter++;
         fireballMap.put(id, this);
@@ -44,9 +45,8 @@ public class Fireball {
         body.applyForceToCenter(dirX * 10f, -Constants.GRAVITATIONAL_CONSTANT.y, true);
 
         stateTime = 0;
-        TextureRegion[] tmp = TextureRegion.split(game.assetManager
-                .get("spritesheets/ld54-enemy3-bullet-Sheet.png", Texture.class), 16, 16)[0];
-        animation = new Animation<>(ANIMATION_FRAME_DURATION, tmp);
+
+        animation = new Animation<>(ANIMATION_FRAME_DURATION, textureRegions);
         this.damage = damage;
     }
 

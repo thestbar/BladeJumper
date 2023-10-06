@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.MapObjects;
@@ -45,11 +46,17 @@ public class Enemy {
     private boolean isAttackToPlayerEnabled;
     private final boolean isEnemyRanged;
     private float timeSinceLastMeleeAttack;
+    private final TextureRegion[] fireballTextureRegions;
 
-    public Enemy(GameApp game, World world, int enemyType, int x, int y, float range, SoundManager soundManager) {
+    public Enemy(GameApp game, World world, int enemyType, int x, int y, float range,
+                 SoundManager soundManager, TextureRegion[][] enemyTextureRegions,
+                 TextureRegion[][] flippedEnemyTextureRegions, TextureRegion[] healthBarTextures,
+                 TextureRegion[] fireballTextureRegions) {
         this.game = game;
         this.soundManager = soundManager;
         this.enemyType = enemyType;
+        this.healthBarTextures = healthBarTextures;
+        this.fireballTextureRegions = fireballTextureRegions;
         this.range = range;
         this.world = world;
         switch (enemyType) {
@@ -115,28 +122,13 @@ public class Enemy {
         body.createFixture(fixtureDef).setUserData(attackSensorId);
         shape.dispose();
 
-        TextureRegion[][] tmp = TextureRegion.split(game.assetManager
-                .get("spritesheets/ld54-enemies-Sheet.png", Texture.class), 16, 16);
+        restAnimation = new Animation<>(ANIMATION_FRAME_DURATION, enemyTextureRegions[2 * enemyType + 1]);
+        attackAnimation = new Animation<>(ANIMATION_FRAME_DURATION, enemyTextureRegions[2 * enemyType]);
 
-        TextureRegion[][] tmpFlipped = TextureRegion.split(game.assetManager
-                .get("spritesheets/ld54-enemies-Sheet.png", Texture.class), 16, 16);
-
-        for (int i = 0; i < 4; ++i) {
-            tmpFlipped[2 * enemyType][i].flip(true, false);
-            tmpFlipped[2 * enemyType + 1][i].flip(true, false);
-        }
-
-        restAnimation = new Animation<>(ANIMATION_FRAME_DURATION, tmp[2 * enemyType + 1]);
-        attackAnimation = new Animation<>(ANIMATION_FRAME_DURATION, tmp[2 * enemyType]);
-
-        flippedRestAnimation = new Animation<>(ANIMATION_FRAME_DURATION, tmpFlipped[2 * enemyType + 1]);
-        flippedAttackAnimation = new Animation<>(ANIMATION_FRAME_DURATION, tmpFlipped[2 * enemyType]);
+        flippedRestAnimation = new Animation<>(ANIMATION_FRAME_DURATION, flippedEnemyTextureRegions[2 * enemyType + 1]);
+        flippedAttackAnimation = new Animation<>(ANIMATION_FRAME_DURATION, flippedEnemyTextureRegions[2 * enemyType]);
 
         enemyState = EnemyState.REST;
-
-        // Create health bar
-        healthBarTextures = TextureRegion.split(game.assetManager
-                .get("spritesheets/ld54-healrthbar-Sheet.png", Texture.class), 16, 16)[0];
 
         timeSinceLastRangeAttack = 0;
         isAttackToPlayerEnabled = false;
@@ -156,7 +148,7 @@ public class Enemy {
             if (timeSinceLastRangeAttack >= 10 * ANIMATION_FRAME_DURATION) {
                 timeSinceLastRangeAttack = 0;
                 new Fireball(game, world, (int) (body.getPosition().x * Constants.PPM),
-                        (int) (body.getPosition().y * Constants.PPM), flip, damage);
+                        (int) (body.getPosition().y * Constants.PPM), flip, damage, fireballTextureRegions);
             }
         }
         if (healthPoints == 0) {
@@ -223,12 +215,40 @@ public class Enemy {
     }
 
     public static void createEnemies(GameApp game, World world, MapObjects objects, SoundManager soundManager) {
+        TextureAtlas textureAtlas = game.assetManager.get("spritesheets/atlas/ld54.atlas", TextureAtlas.class);
+        // Create enemy texture regions
+        // Both normal and flipped ones
+        TextureRegion[][] tmpEnemyTextureRegions = new TextureRegion[8][4];
+        TextureRegion[][] tmpFlippedEnemyTextureRegions = new TextureRegion[8][4];
+        for (int i = 0; i < 8; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                int index = 4 * i + j + 1;
+                String regionName = "ld54-enemies-Sheet" + index;
+                tmpEnemyTextureRegions[i][j] = textureAtlas.findRegion(regionName);
+                tmpFlippedEnemyTextureRegions[i][j] = new TextureRegion(tmpEnemyTextureRegions[i][j]);
+                tmpFlippedEnemyTextureRegions[i][j].flip(true, false);
+            }
+        }
+        // Create health bar textures
+        TextureRegion[] tmpHealthBarTextureRegions = new TextureRegion[13];
+        for (int i = 0; i < 13; ++i) {
+            String regionName = "ld54-healrthbar-Sheet" + (i + 1);
+            tmpHealthBarTextureRegions[i] = textureAtlas.findRegion(regionName);
+        }
+        // Create fireball texture regions
+        TextureRegion[] tmpFireballTextureRegions = new TextureRegion[4];
+        for (int i = 0; i < 4; ++i) {
+            String region = "ld54-enemy3-bullet-Sheet" + (i + 1);
+            tmpFireballTextureRegions[i] = textureAtlas.findRegion(region);
+        }
         for (MapObject object : objects) {
             Rectangle rectangle = ((RectangleMapObject) object).getRectangle();
             int enemyType = Integer.parseInt(object.getName()) - 1;
             float enemyRange = (enemyType == 3) ? 320 / Constants.PPM : 32 / Constants.PPM;
             Enemy.enemiesArray.add(new Enemy(game, world, enemyType, (int) rectangle.x,
-                    (int) rectangle.y, enemyRange, soundManager));
+                    (int) rectangle.y, enemyRange, soundManager, tmpEnemyTextureRegions,
+                    tmpFlippedEnemyTextureRegions, tmpHealthBarTextureRegions,
+                    tmpFireballTextureRegions));
         }
     }
 }
