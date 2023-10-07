@@ -9,6 +9,8 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.DelayedRemovalArray;
 import com.thestbar.ludumdare54.GameApp;
 import com.thestbar.ludumdare54.managers.SoundManager;
 import com.thestbar.ludumdare54.utils.Box2DUtils;
@@ -34,6 +36,7 @@ public class Player {
     public float maxHealthPoints;
     public float healthPoints;
     private SoundManager soundManager;
+    public Array<Integer> collectedPowerupTypes;
 
     public Player(GameApp game, World world, int x, int y, SoundManager soundManager) {
         this.game = game;
@@ -84,6 +87,15 @@ public class Player {
         playerDamage = 30f;
         healthPoints = 120f;
         maxHealthPoints = 120f;
+        collectedPowerupTypes = new Array<>();
+        collectedPowerupTypes.add(2);
+        collectedPowerupTypes.add(0);
+        collectedPowerupTypes.add(2);
+        collectedPowerupTypes.add(1);
+        collectedPowerupTypes.add(1);
+        collectedPowerupTypes.add(0);
+        collectedPowerupTypes.add(1);
+        collectedPowerupTypes.add(2);
     }
 
     public enum PlayerState {
@@ -94,9 +106,11 @@ public class Player {
         WIN
     }
 
-    public void render(SpriteBatch batch) {
-        stateTime += Gdx.graphics.getDeltaTime();
-        weaponStateTime += Gdx.graphics.getDeltaTime();
+    public void render(SpriteBatch batch, boolean pauseAnimation) {
+        if (!pauseAnimation) {
+            stateTime += Gdx.graphics.getDeltaTime();
+            weaponStateTime += Gdx.graphics.getDeltaTime();
+        }
 
         renderPlayer(batch);
 

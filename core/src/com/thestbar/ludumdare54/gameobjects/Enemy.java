@@ -140,11 +140,15 @@ public class Enemy {
         ATTACK
     }
 
-    public void render(SpriteBatch batch, boolean flip) {
-        stateTime += Gdx.graphics.getDeltaTime();
+    public void render(SpriteBatch batch, boolean flip, boolean pauseAnimation) {
+        if (!pauseAnimation) {
+            stateTime += Gdx.graphics.getDeltaTime();
+        }
         if (enemyType == 3) {
             // Has range attack
-            timeSinceLastRangeAttack += Gdx.graphics.getDeltaTime();
+            if (!pauseAnimation) {
+                timeSinceLastRangeAttack += Gdx.graphics.getDeltaTime();
+            }
             if (timeSinceLastRangeAttack >= 10 * ANIMATION_FRAME_DURATION) {
                 timeSinceLastRangeAttack = 0;
                 new Fireball(game, world, (int) (body.getPosition().x * Constants.PPM),
@@ -177,7 +181,7 @@ public class Enemy {
         batch.end();
 
         // Check if player is close and damage them
-        if (isAttackToPlayerEnabled && !isEnemyRanged) {
+        if (isAttackToPlayerEnabled && !isEnemyRanged && !pauseAnimation) {
             timeSinceLastMeleeAttack += Gdx.graphics.getDeltaTime();
             if (timeSinceLastMeleeAttack >= ANIMATION_FRAME_DURATION) {
                 timeSinceLastMeleeAttack = 0;

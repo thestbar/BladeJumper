@@ -38,6 +38,7 @@ public class ListenerClass implements ContactListener {
                 powerupId = (String) fa.getUserData();
             }
             Powerup powerup = Powerup.powerupMap.get(powerupId);
+            GameScreen.player.collectedPowerupTypes.add(powerup.powerupType);
             GameScreen.player.addPowerUp(powerup);
             GameScreen.bodiesToBeDeleted.add(powerup.body);
             Powerup.powerupsArray.removeValue(powerup, true);

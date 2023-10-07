@@ -5,11 +5,15 @@
 	<inherits name='com.badlogic.ashley_gwt' />
 	<inherits name='com.badlogic.gdx.physics.box2d.box2d-gwt' />
 	<inherits name='Box2DLights' />
-
+	<inherits name="dev.lyze.gdxUnBox2d"/>
 	<inherits name='GameApp' />
 	<entry-point class='com.thestbar.ludumdare54.client.HtmlLauncher' />
 	<set-configuration-property name='xsiframe.failIfScriptTag' value='FALSE'/>
 	<set-configuration-property name="gdx.assetpath" value="../assets" />
 	<set-property name="user.agent" value="gecko1_8, safari"/>
 	<collapse-property name="user.agent" values="*" />
+	<extend-configuration-property name="gdx.reflect.include" value="com.badlogic.gdx.maps.MapGroupLayer" />
+	<extend-configuration-property name="gdx.reflect.include" value="com.badlogic.gdx.maps.tiled.TiledMapTileLayer" />
+	<extend-configuration-property name="gdx.reflect.include" value="com.badlogic.gdx.maps.MapLayer" />
+
 </module>

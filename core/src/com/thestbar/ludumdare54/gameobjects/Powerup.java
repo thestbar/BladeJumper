@@ -28,7 +28,7 @@ public class Powerup {
     public static int powerups = 0;
     private final float ANIMATION_FRAME_DURATION = 0.2f;
     public static Map<String, Powerup> powerupMap = new HashMap<>();
-    public static DelayedRemovalArray<Powerup> powerupsArray = new DelayedRemovalArray<>();;
+    public static DelayedRemovalArray<Powerup> powerupsArray = new DelayedRemovalArray<>();
 
     public Powerup(GameApp game, World world, int powerupType, int x, int y, TextureRegion[][] textureRegions) {
         this.powerupType = powerupType;
@@ -47,8 +47,10 @@ public class Powerup {
         animation = new Animation<>(ANIMATION_FRAME_DURATION, textureRegions[powerupType]);
     }
 
-    public void render(SpriteBatch batch) {
-        stateTime += Gdx.graphics.getDeltaTime();
+    public void render(SpriteBatch batch, boolean pauseAnimation) {
+        if (!pauseAnimation) {
+            stateTime += Gdx.graphics.getDeltaTime();
+        }
         TextureRegion currentFrame = animation.getKeyFrame(stateTime, true);
         float x = body.getPosition().x * Constants.PPM - 8f;
         float y = body.getPosition().y * Constants.PPM - 8f;

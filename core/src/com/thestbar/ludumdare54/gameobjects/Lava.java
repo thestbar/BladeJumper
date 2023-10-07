@@ -35,8 +35,10 @@ public class Lava {
         animation = new Animation<>(ANIMATION_FRAME_DURATION, textureRegions);
     }
 
-    public void render(SpriteBatch batch) {
-        stateTime += Gdx.graphics.getDeltaTime();
+    public void render(SpriteBatch batch, boolean pauseAnimation) {
+        if (!pauseAnimation) {
+            stateTime += Gdx.graphics.getDeltaTime();
+        }
         TextureRegion currentFrame = animation.getKeyFrame(stateTime, true);
         float x = body.getPosition().x * Constants.PPM - 8;
         float y = body.getPosition().y * Constants.PPM - 8;

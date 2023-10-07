@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
@@ -58,6 +59,12 @@ public class GameScreen implements Screen {
     private float titleLabelSize = 2f;
     private Stage uiStage;
     private ProgressBar uiPlayerHealthBar;
+
+    // Tab menu
+    private boolean isPowerupMenuOpen = false;
+    private Stage powerupStage;
+    private TextureAtlas powerupGuiAtlas;
+    private TextureRegion[] powerupTextures;
 
     // TODO - There is a bug on double jump, when the player goes away from a platform without jumping
     public GameScreen(GameApp game) {
@@ -175,7 +182,38 @@ public class GameScreen implements Screen {
         uiPlayerHealthBar.setValue(player.maxHealthPoints);
         uiRootTable.add(uiPlayerHealthBar).width(500).padTop(20).padLeft(20);
 
-//        uiRootTable.debug();
+        // Powerup menu UI
+        powerupGuiAtlas = new TextureAtlas("spritesheets/atlas/ld54-powerups-gui.atlas");
+        powerupTextures = new TextureRegion[8];
+        powerupTextures[0] = powerupGuiAtlas.findRegion("ld54-powerup-menu");
+        powerupTextures[1] = powerupGuiAtlas.findRegion("ld54-powerup-menu-no-grid");
+        for (int i = 1; i < 4; ++i) {
+            powerupTextures[i + 1] = powerupGuiAtlas.findRegion("ld54-powerup-" + i);
+            powerupTextures[i + 4] = powerupGuiAtlas.findRegion("ld54-powerup-inv" + i);
+        }
+
+        powerupStage = new Stage(new ScreenViewport());
+        Table powerupRootTable = new Table();
+        powerupRootTable.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        powerupRootTable.setFillParent(true);
+//        powerupRootTable.debug();
+        powerupRootTable.top();
+        powerupStage.addActor(powerupRootTable);
+
+        Label title = new Label("Power Ups Menu", this.game.skin);
+        title.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
+        title.setFontScale(0.8f);
+        powerupRootTable.add(title).colspan(2).height(100).padTop(100).row();
+
+        Label title1 = new Label("Combine", this.game.skin);
+        title1.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
+        title1.setFontScale(0.6f);
+        powerupRootTable.add(title1).colspan(1).padRight(150);
+
+        Label title2 = new Label("Inventory", this.game.skin);
+        title2.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
+        title2.setFontScale(0.6f);
+        powerupRootTable.add(title2).colspan(1).row();
 
         listener = new ListenerClass();
         world.setContactListener(listener);
@@ -192,22 +230,27 @@ public class GameScreen implements Screen {
         if (!soundManager.isBackgroundMusicOn()) {
             soundManager.playBackgroundMusic();
         }
+
         game.batch.begin();
         game.batch.draw(game.assetManager.get("spritesheets/ld54-background.png", Texture.class),
                 0, 0, camera.viewportWidth * Constants.SCALE,
                 camera.viewportHeight * Constants.SCALE * 2);
         game.batch.end();
-        world.step(1/60f, 6, 2);
         inputUpdate(delta);
         cameraUpdate(delta);
+        if (!isPowerupMenuOpen) {
+            world.step(1/60f, 6, 2);
+        } else {
+            world.clearForces();
+        }
         game.batch.setProjectionMatrix(camera.combined);
         if (!(player.playerState == Player.PlayerState.DIE)) {
-            player.render(game.batch);
+            player.render(game.batch, isPowerupMenuOpen);
         } else {
             // This is done to display death animation
             playerDiedDeltaTime += delta;
             if (playerDiedDeltaTime < 1.2f) {
-                player.render(game.batch);
+                player.render(game.batch, false);
             }
         }
         for (Enemy enemy : Enemy.enemiesArray) {
@@ -217,16 +260,16 @@ public class GameScreen implements Screen {
             if (distanceFromPlayer <= enemy.range) {
                 enemy.attack();
             }
-            enemy.render(game.batch, flip);
+            enemy.render(game.batch, flip, isPowerupMenuOpen);
         }
         for (Powerup powerup : Powerup.powerupsArray) {
-            powerup.render(game.batch);
+            powerup.render(game.batch, isPowerupMenuOpen);
         }
         for (Lava lava : Lava.lavaArray) {
-            lava.render(game.batch);
+            lava.render(game.batch, isPowerupMenuOpen);
         }
         for (Fireball fireball : Fireball.activeFireballs) {
-            fireball.render(game.batch);
+            fireball.render(game.batch, isPowerupMenuOpen);
         }
         tiledMapRenderer.setView(camera);
         tiledMapRenderer.render();
@@ -268,6 +311,42 @@ public class GameScreen implements Screen {
                 game.setScreen(new GameScreen(game));
             }
         }
+
+        if (isPowerupMenuOpen) {
+            // Dim the screen
+            game.batch.begin();
+            game.batch.draw(game.assetManager.get("spritesheets/ld54-black-transparent.png", Texture.class),
+                    0, 0, camera.viewportWidth * Constants.PPM, camera.viewportHeight * Constants.PPM);
+            game.batch.draw(powerupTextures[0], camera.position.x - 56, camera.position.y - 33,
+                    powerupTextures[0].getRegionWidth() / 3f, powerupTextures[0].getRegionHeight() / 3f);
+            game.batch.draw(powerupTextures[1], camera.position.x, camera.position.y - 33,
+                    powerupTextures[0].getRegionWidth() / 3f, powerupTextures[0].getRegionHeight() / 3f);
+            game.batch.end();
+            // Display the power up panel
+            System.out.println(player.collectedPowerupTypes);
+
+            int i = 0, j = 0;
+            final float size = 53f / 3f;
+            for (int powerupTypeId : player.collectedPowerupTypes) {
+                float x = camera.position.x + size * i;
+                float y = camera.position.y + 2 - size * j;
+                game.batch.begin();
+                game.batch.draw(powerupTextures[5 + powerupTypeId], x, y, size, size);
+                game.batch.end();
+                if (++i == 3) {
+                    i = 0;
+                    ++j;
+                }
+            }
+
+            powerupStage.getViewport().apply();
+            powerupStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
+            powerupStage.draw();
+
+
+
+            game.stage.getViewport().apply();
+        }
     }
 
     private void inputUpdate(float delta) {
@@ -275,8 +354,15 @@ public class GameScreen implements Screen {
             player.playerState == Player.PlayerState.WIN) {
             return;
         }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.TAB)) {
+            isPowerupMenuOpen = !isPowerupMenuOpen;
+        }
+        // In case the powerup menu is open do not let the
+        // user move the character
+        if (isPowerupMenuOpen) {
+            return;
+        }
         int horizontalForce = 0;
-
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
             horizontalForce -= 1;
             player.playerState = Player.PlayerState.MOVE_LEFT;
@@ -346,6 +432,7 @@ public class GameScreen implements Screen {
         tiledMapRenderer.dispose();
         map.dispose();
         game.assetManager.clear();
+        powerupStage.dispose();
     }
 
     public void disposeStaticMemory() {

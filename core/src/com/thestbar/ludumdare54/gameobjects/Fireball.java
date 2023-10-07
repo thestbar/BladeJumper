@@ -50,8 +50,10 @@ public class Fireball {
         this.damage = damage;
     }
 
-    public void render(SpriteBatch batch) {
-        stateTime += Gdx.graphics.getDeltaTime();
+    public void render(SpriteBatch batch, boolean pauseAnimation) {
+        if (!pauseAnimation) {
+            stateTime += Gdx.graphics.getDeltaTime();
+        }
         body.applyForceToCenter(dirX * 10f, -Constants.GRAVITATIONAL_CONSTANT.y, true);
         TextureRegion currentFrame = animation.getKeyFrame(stateTime, true);
         float x = body.getPosition().x * Constants.PPM - 8;
