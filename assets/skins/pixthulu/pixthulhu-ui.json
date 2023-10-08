@@ -2,12 +2,21 @@
 com.badlogic.gdx.graphics.g2d.BitmapFont: {
 	font: {
 		file: font-export.fnt
+		scaledSize: -1
+		markupEnabled: false
+		flip: false
 	}
 	subtitle: {
 		file: font-subtitle-export.fnt
+		scaledSize: -1
+		markupEnabled: false
+		flip: false
 	}
 	title: {
 		file: font-title-export.fnt
+		scaledSize: -1
+		markupEnabled: false
+		flip: false
 	}
 }
 com.badlogic.gdx.graphics.Color: {
@@ -100,7 +109,7 @@ com.badlogic.gdx.scenes.scene2d.ui.Button$ButtonStyle: {
 	toggle: {
 		up: button
 		down: button-pressed
-		checked: button-pressed
+		checked: ld54-powerup-inv1
 	}
 	arcade: {
 		up: button-arcade
@@ -124,6 +133,18 @@ com.badlogic.gdx.scenes.scene2d.ui.ImageButton$ImageButtonStyle: {
 		up: button
 		down: button-pressed
 		checked: button-pressed
+	}
+	powerup-button-red: {
+		imageUp: ld54-powerup-inv2
+		imageChecked: ld54-powerup-1-selected
+	}
+	powerup-button-green: {
+		imageUp: ld54-powerup-inv3
+		imageChecked: ld54-powerup-3-selected
+	}
+	powerup-button-yellow: {
+		imageUp: ld54-powerup-inv1
+		imageChecked: ld54-powerup-2-selected
 	}
 }
 com.badlogic.gdx.scenes.scene2d.ui.ImageTextButton$ImageTextButtonStyle: {

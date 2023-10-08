@@ -13,8 +13,11 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.DelayedRemovalArray;
 import com.thestbar.ludumdare54.GameApp;
 import com.thestbar.ludumdare54.managers.SoundManager;
+import com.thestbar.ludumdare54.screens.GameScreen;
 import com.thestbar.ludumdare54.utils.Box2DUtils;
 import com.thestbar.ludumdare54.utils.Constants;
+
+import java.util.Arrays;
 
 public class Player {
     public GameApp game;
@@ -88,14 +91,14 @@ public class Player {
         healthPoints = 120f;
         maxHealthPoints = 120f;
         collectedPowerupTypes = new Array<>();
-        collectedPowerupTypes.add(2);
-        collectedPowerupTypes.add(0);
-        collectedPowerupTypes.add(2);
-        collectedPowerupTypes.add(1);
-        collectedPowerupTypes.add(1);
-        collectedPowerupTypes.add(0);
-        collectedPowerupTypes.add(1);
-        collectedPowerupTypes.add(2);
+//        collectedPowerupTypes.add(2);
+//        collectedPowerupTypes.add(0);
+//        collectedPowerupTypes.add(2);
+//        collectedPowerupTypes.add(1);
+//        collectedPowerupTypes.add(1);
+//        collectedPowerupTypes.add(0);
+//        collectedPowerupTypes.add(1);
+//        collectedPowerupTypes.add(2);
     }
 
     public enum PlayerState {
@@ -216,6 +219,7 @@ public class Player {
 
     public void addPowerUp(Powerup powerup) {
         soundManager.playSound("powerup");
+        collectedPowerupTypes.add(powerup.powerupType);
     }
 
     public void damagePlayer(float damage) {

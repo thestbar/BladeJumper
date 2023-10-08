@@ -18,11 +18,11 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.scenes.scene2d.Event;
+import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -34,6 +34,8 @@ import com.thestbar.ludumdare54.utils.Box2DUtils;
 import com.thestbar.ludumdare54.utils.Constants;
 import com.thestbar.ludumdare54.utils.LabelStyleUtil;
 import com.thestbar.ludumdare54.utils.TiledObjectUtil;
+
+import java.util.*;
 
 public class GameScreen implements Screen {
     private GameApp game;
@@ -63,8 +65,15 @@ public class GameScreen implements Screen {
     // Tab menu
     private boolean isPowerupMenuOpen = false;
     private Stage powerupStage;
+    private Table powerupRootTable;
     private TextureAtlas powerupGuiAtlas;
     private TextureRegion[] powerupTextures;
+    private Array<ImageButton> powerupGuiButtons;
+    private ImageButton selectedButton;
+    private Map<ImageButton, Integer> guiButtonTypes;
+    private Integer[][] powerupGrid;
+
+    private float printPowerupStateTime = 0;
 
     // TODO - There is a bug on double jump, when the player goes away from a platform without jumping
     public GameScreen(GameApp game) {
@@ -183,7 +192,7 @@ public class GameScreen implements Screen {
         uiRootTable.add(uiPlayerHealthBar).width(500).padTop(20).padLeft(20);
 
         // Powerup menu UI
-        powerupGuiAtlas = new TextureAtlas("spritesheets/atlas/ld54-powerups-gui.atlas");
+        powerupGuiAtlas = new TextureAtlas("skins/powerups-gui/ld54-powerups-gui.atlas");
         powerupTextures = new TextureRegion[8];
         powerupTextures[0] = powerupGuiAtlas.findRegion("ld54-powerup-menu");
         powerupTextures[1] = powerupGuiAtlas.findRegion("ld54-powerup-menu-no-grid");
@@ -193,27 +202,16 @@ public class GameScreen implements Screen {
         }
 
         powerupStage = new Stage(new ScreenViewport());
-        Table powerupRootTable = new Table();
+        powerupRootTable = new Table();
         powerupRootTable.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         powerupRootTable.setFillParent(true);
 //        powerupRootTable.debug();
         powerupRootTable.top();
         powerupStage.addActor(powerupRootTable);
-
-        Label title = new Label("Power Ups Menu", this.game.skin);
-        title.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
-        title.setFontScale(0.8f);
-        powerupRootTable.add(title).colspan(2).height(100).padTop(100).row();
-
-        Label title1 = new Label("Combine", this.game.skin);
-        title1.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
-        title1.setFontScale(0.6f);
-        powerupRootTable.add(title1).colspan(1).padRight(150);
-
-        Label title2 = new Label("Inventory", this.game.skin);
-        title2.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
-        title2.setFontScale(0.6f);
-        powerupRootTable.add(title2).colspan(1).row();
+        powerupGuiButtons = new Array<>();
+        selectedButton = null;
+        guiButtonTypes = new HashMap<>();
+        powerupGrid = new Integer[3][3];
 
         listener = new ListenerClass();
         world.setContactListener(listener);
@@ -313,29 +311,119 @@ public class GameScreen implements Screen {
         }
 
         if (isPowerupMenuOpen) {
+//            printPowerupStateTime += Gdx.graphics.getDeltaTime();
+//            if (printPowerupStateTime > 5f) {
+//                printPowerupStateTime = 0;
+//                for (int i = 0; i < 3; ++i) {
+//                    for (int j = 0; j < 3; ++j) {
+//                        if (powerupGrid[i][j] == null) {
+//                            System.out.print("- ");
+//                        } else {
+//                            System.out.print(powerupGrid[i][j] + " ");
+//                        }
+//                    }
+//                    System.out.println();
+//                }
+//            }
             // Dim the screen
             game.batch.begin();
             game.batch.draw(game.assetManager.get("spritesheets/ld54-black-transparent.png", Texture.class),
                     0, 0, camera.viewportWidth * Constants.PPM, camera.viewportHeight * Constants.PPM);
-            game.batch.draw(powerupTextures[0], camera.position.x - 56, camera.position.y - 33,
+            game.batch.draw(powerupTextures[0], camera.position.x + 27, camera.position.y - 33,
                     powerupTextures[0].getRegionWidth() / 3f, powerupTextures[0].getRegionHeight() / 3f);
-            game.batch.draw(powerupTextures[1], camera.position.x, camera.position.y - 33,
+            game.batch.draw(powerupTextures[1], camera.position.x - 80, camera.position.y - 33,
                     powerupTextures[0].getRegionWidth() / 3f, powerupTextures[0].getRegionHeight() / 3f);
             game.batch.end();
             // Display the power up panel
-            System.out.println(player.collectedPowerupTypes);
+            initPowerupGui();
 
-            int i = 0, j = 0;
-            final float size = 53f / 3f;
-            for (int powerupTypeId : player.collectedPowerupTypes) {
-                float x = camera.position.x + size * i;
-                float y = camera.position.y + 2 - size * j;
-                game.batch.begin();
-                game.batch.draw(powerupTextures[5 + powerupTypeId], x, y, size, size);
-                game.batch.end();
-                if (++i == 3) {
-                    i = 0;
-                    ++j;
+            Gdx.input.setInputProcessor(powerupStage);
+
+            // If a power up is selected then display it on the combine section
+            if (selectedButton != null) {
+                int selectedPowerupTypeId = guiButtonTypes.get(selectedButton);
+                // Find selected button's position in the grid
+                int secRow, secCol = -1, firstRow = -1, firstCol = -1;
+                boolean foundFirst = false;
+                outerLoop:
+                for (secRow = 0; secRow < 3; ++secRow) {
+                    for (secCol = 0; secCol < 3; ++secCol) {
+                        if (powerupGrid[secRow][secCol] != null && powerupGrid[secRow][secCol] == selectedPowerupTypeId + 3) {
+                            if (foundFirst) {
+                                break outerLoop;
+                            } else {
+                                firstRow = secRow;
+                                firstCol = secCol;
+                                foundFirst = true;
+                            }
+                        }
+                    }
+                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.A)) {
+                    // Try to move left
+                    int newFirstCol = firstCol - 1;
+                    int newSecCol = secCol - 1;
+                    if (newFirstCol >= 0 && newSecCol >= 0 &&
+                            (powerupGrid[firstRow][newFirstCol] == null || powerupGrid[firstRow][newFirstCol] == selectedPowerupTypeId + 3) &&
+                            (powerupGrid[secRow][newSecCol] == null || powerupGrid[secRow][newSecCol] == selectedPowerupTypeId + 3)) {
+                        // Move it
+                        powerupGrid[firstRow][firstCol] = null;
+                        powerupGrid[secRow][secCol] = null;
+                        powerupGrid[firstRow][newFirstCol] = selectedPowerupTypeId + 3;
+                        powerupGrid[secRow][newSecCol] = selectedPowerupTypeId + 3;
+                    }
+                } else if (Gdx.input.isKeyJustPressed(Input.Keys.D)) {
+                    // Try to move right
+                    int newFirstCol = firstCol + 1;
+                    int newSecCol = secCol + 1;
+                    if (newFirstCol < 3 && newSecCol < 3 &&
+                            (powerupGrid[firstRow][newFirstCol] == null || powerupGrid[firstRow][newFirstCol] == selectedPowerupTypeId + 3) &&
+                            (powerupGrid[secRow][newSecCol] == null || powerupGrid[secRow][newSecCol] == selectedPowerupTypeId + 3)) {
+                        // Move it
+                        powerupGrid[firstRow][firstCol] = null;
+                        powerupGrid[secRow][secCol] = null;
+                        powerupGrid[firstRow][newFirstCol] = selectedPowerupTypeId + 3;
+                        powerupGrid[secRow][newSecCol] = selectedPowerupTypeId + 3;
+                    }
+                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.W)) {
+                    // Try to move up
+                    int newFirstRow = firstRow - 1;
+                    int newSecRow = secRow - 1;
+                    if (newFirstRow >= 0 && newSecRow >= 0 &&
+                            (powerupGrid[newFirstRow][firstCol] == null || powerupGrid[newFirstRow][firstCol] == selectedPowerupTypeId + 3) &&
+                            (powerupGrid[newSecRow][secCol] == null || powerupGrid[newSecRow][secCol] == selectedPowerupTypeId + 3)) {
+                        powerupGrid[firstRow][firstCol] = null;
+                        powerupGrid[secRow][secCol] = null;
+                        powerupGrid[newFirstRow][firstCol] = selectedPowerupTypeId + 3;
+                        powerupGrid[newSecRow][secCol] = selectedPowerupTypeId + 3;
+                    }
+                } else if (Gdx.input.isKeyJustPressed(Input.Keys.S)) {
+                    // Try to move down
+                    int newFirstRow = firstRow + 1;
+                    int newSecRow = secRow + 1;
+                    if (newFirstRow < 3 && newSecRow < 3 &&
+                            (powerupGrid[newFirstRow][firstCol] == null || powerupGrid[newFirstRow][firstCol] == selectedPowerupTypeId + 3) &&
+                            (powerupGrid[newSecRow][secCol] == null || powerupGrid[newSecRow][secCol] == selectedPowerupTypeId + 3)) {
+                        powerupGrid[firstRow][firstCol] = null;
+                        powerupGrid[secRow][secCol] = null;
+                        powerupGrid[newFirstRow][firstCol] = selectedPowerupTypeId + 3;
+                        powerupGrid[newSecRow][secCol] = selectedPowerupTypeId + 3;
+                    }
+                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                    // Add the power up to the grid
+                    if (firstRow != -1 && powerupGrid[firstRow][firstCol] != null && powerupGrid[secRow][secCol] != null) {
+                        powerupGrid[firstRow][firstCol] -= 3;
+                        powerupGrid[secRow][secCol] -= 3;
+                        selectedButton.setChecked(false);
+                        powerupGuiButtons.removeValue(selectedButton, true);
+                        guiButtonTypes.remove(selectedButton);
+                        // Delete and re-draw all the power ups in the inventory
+                        selectedButton.remove();
+                        selectedButton = null;
+                        player.collectedPowerupTypes.removeValue(selectedPowerupTypeId, true);
+                    }
                 }
             }
 
@@ -343,10 +431,174 @@ public class GameScreen implements Screen {
             powerupStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
             powerupStage.draw();
 
-
-
+            // Draw tiles in combine
+            int[][] pointsNotDrawn = new int[3][3];
+            for (int i = 0; i < 3; ++i) {
+                for (int j = 0; j < 3; ++j) {
+                    if (powerupGrid[i][j] != null && pointsNotDrawn[i][j] == 0) {
+                        // We have to draw it
+                        int typeId = powerupGrid[i][j];
+                        if (typeId > 2) {
+                            typeId -= 3;
+                        }
+                        game.batch.begin();
+                        game.batch.draw(powerupTextures[2 + typeId], camera.position.x + 27 + j * 53 / 3f, camera.position.y - 33 - i * 53 / 3f,
+                                powerupTextures[0].getRegionWidth() / 3f, powerupTextures[0].getRegionHeight() / 3f);
+                        game.batch.end();
+                        if (typeId == 0) {
+                            pointsNotDrawn[i][j + 1] = 1;
+                        } else if (typeId == 1) {
+                            pointsNotDrawn[i + 1][j] = 1;
+                        } else if (typeId == 2) {
+                            pointsNotDrawn[i + 1][j + 1] = 1;
+                        }
+                    }
+                }
+            }
             game.stage.getViewport().apply();
+        } else {
+            // Clear powerup gui table
+            powerupRootTable.clear();
+            powerupRootTable.clear();
+            Gdx.input.setInputProcessor(game.stage);
+            selectedButton = null;
+            guiButtonTypes.clear();
         }
+    }
+
+    private void initPowerupGui() {
+        if (powerupRootTable.getRows() > 0) {
+            return;
+        }
+        Label title = new Label("Power Ups Menu", this.game.skin);
+        title.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
+        title.setFontScale(0.8f);
+        powerupRootTable.add(title).colspan(6).expandX().height(100).padTop(100).row();
+
+        Label title1 = new Label("Combine", this.game.skin);
+        title1.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
+        title1.setFontScale(0.6f);
+        powerupRootTable.add(title1).colspan(3).expandX();
+
+        Label title2 = new Label("Inventory", this.game.skin);
+        title2.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
+        title2.setFontScale(0.6f);
+        powerupRootTable.add(title2).colspan(3).expandX().padBottom(20).row();
+
+        Table innerTable = new Table();
+        Table emptyTable = new Table();
+
+        powerupRootTable.add(innerTable).colspan(3).expandX();
+        powerupRootTable.add(emptyTable).colspan(3).expandX();
+
+        int i = 0;
+        for (final int powerupTypeId : player.collectedPowerupTypes) {
+            final ImageButton button = getImageButton(powerupTypeId);
+            button.setProgrammaticChangeEvents(false);
+            button.addListener(new EventListener() {
+                @Override
+                public boolean handle(Event event) {
+                    if (event instanceof ChangeListener.ChangeEvent) {
+                        for (int i = 0; i < 3; ++i) {
+                            for (int j = 0; j < 3; ++j) {
+                                if (powerupGrid[i][j] != null && powerupGrid[i][j] > 2) {
+                                    powerupGrid[i][j] = null;
+                                }
+                            }
+                        }
+                        if (selectedButton != null) {
+                            selectedButton.setChecked(false);
+                        }
+                        selectedButton = button;
+                        // Find available spot
+                        switch (powerupTypeId) {
+                            case 0: // Yellow
+                                System.out.println("Adding Yellow");
+                                findPositionForNewYellow(powerupTypeId);
+                                break;
+                            case 1: // Red
+                                System.out.println("Adding Red");
+                                findPositionForNewRed(powerupTypeId);
+                                break;
+                            case 2: // Green
+                                System.out.println("Adding Green");
+                                findPositionForNewGreen(powerupTypeId);
+                                break;
+                            default:
+                                break;
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+            });
+            powerupGuiButtons.add(button);
+            guiButtonTypes.put(button, powerupTypeId);
+            innerTable.add(button);
+            ++i;
+            if (i == 5) {
+                innerTable.row();
+                i = 0;
+            }
+        }
+    }
+
+    private void findPositionForNewGreen(int powerupTypeId) {
+        for (int i = 0; i < 2; ++i) {
+            for (int j = 0; j < 2; ++j) {
+                if (powerupGrid[i][j] == null && powerupGrid[i + 1][j + 1] == null) {
+                    // Found
+                    powerupGrid[i][j] = powerupTypeId + 3;
+                    powerupGrid[i + 1][j + 1] = powerupTypeId + 3;
+                    return;
+                }
+            }
+        }
+    }
+
+    private void findPositionForNewRed(int powerupTypeId) {
+        for (int i = 0; i < 2; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                if (powerupGrid[i][j] == null && powerupGrid[i + 1][j] == null) {
+                    // Found
+                    powerupGrid[i][j] = powerupTypeId + 3;
+                    powerupGrid[i + 1][j] = powerupTypeId + 3;
+                    return;
+                }
+            }
+        }
+    }
+
+    private void findPositionForNewYellow(int powerupTypeId) {
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 2; ++j) {
+                if (powerupGrid[i][j] == null && powerupGrid[i][j + 1] == null) {
+                    // Found
+                    powerupGrid[i][j] = powerupTypeId + 3;
+                    powerupGrid[i][j + 1] = powerupTypeId + 3;
+                    return;
+                }
+            }
+        }
+    }
+
+    private ImageButton getImageButton(int powerupTypeId) {
+        String buttonStyle;
+        switch(powerupTypeId) {
+            case 0:
+                buttonStyle = "powerup-button-yellow";
+                break;
+            case 1:
+                buttonStyle = "powerup-button-red";
+                break;
+            case 2:
+                buttonStyle = "powerup-button-green";
+                break;
+            default:
+                buttonStyle = "";
+                break;
+        }
+        return new ImageButton(game.skin, buttonStyle);
     }
 
     private void inputUpdate(float delta) {
@@ -356,6 +608,13 @@ public class GameScreen implements Screen {
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.TAB)) {
             isPowerupMenuOpen = !isPowerupMenuOpen;
+            for (int i = 0; i < 3; ++i) {
+                for (int j = 0; j < 3; ++j) {
+                    if (powerupGrid[i][j] != null && powerupGrid[i][j] > 2) {
+                        powerupGrid[i][j] = null;
+                    }
+                }
+            }
         }
         // In case the powerup menu is open do not let the
         // user move the character
