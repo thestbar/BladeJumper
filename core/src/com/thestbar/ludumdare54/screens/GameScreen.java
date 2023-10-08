@@ -251,6 +251,15 @@ public class GameScreen implements Screen {
                 player.render(game.batch, false);
             }
         }
+        if (!isPowerupMenuOpen) {
+            for (Player.ActiveEffect effect : player.activeEffects) {
+                if (effect.cycle(Gdx.graphics.getDeltaTime())) {
+                    for (int i = 0; i < 3; ++i) {
+                        powerupGrid[effect.type][i] = null;
+                    }
+                }
+            }
+        }
         for (Enemy enemy : Enemy.enemiesArray) {
             float distanceFromPlayer = player.body.getPosition().dst(enemy.body.getPosition());
             Vector2 dir = player.body.getPosition().cpy().sub(enemy.body.getPosition()).nor();
@@ -442,10 +451,9 @@ public class GameScreen implements Screen {
             powerupStage.draw();
 
             // Draw tiles in combine
-            int[][] pointsNotDrawn = new int[3][3];
             for (int i = 0; i < 3; ++i) {
                 for (int j = 0; j < 3; ++j) {
-                    if (powerupGrid[i][j] != null && pointsNotDrawn[i][j] == 0) {
+                    if (powerupGrid[i][j] != null) {
                         // We have to draw it
                         int typeId = powerupGrid[i][j];
                         if (typeId > 2) {
@@ -455,13 +463,6 @@ public class GameScreen implements Screen {
                         game.batch.draw(powerupTextures[2 + typeId], camera.position.x + 27 + j * 53 / 3f, camera.position.y - 33 - i * 53 / 3f,
                                 powerupTextures[0].getRegionWidth() / 3f, powerupTextures[0].getRegionHeight() / 3f);
                         game.batch.end();
-                        if (typeId == 0) {
-                            pointsNotDrawn[i][j + 1] = 1;
-                        } else if (typeId == 1) {
-                            pointsNotDrawn[i + 1][j] = 1;
-                        } else if (typeId == 2) {
-                            pointsNotDrawn[i + 1][j + 1] = 1;
-                        }
                     }
                 }
             }

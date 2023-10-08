@@ -34,7 +34,7 @@ public class Player {
     public float healthPoints;
     private SoundManager soundManager;
     public Array<Integer> collectedPowerupTypes;
-    private Array<ActiveEffect> activeEffects;
+    public Array<ActiveEffect> activeEffects;
     private float jumpMultiplier;
     public float armor;
 
@@ -116,9 +116,6 @@ public class Player {
         }
 
         renderPlayer(batch);
-        for (ActiveEffect effect : activeEffects) {
-            effect.cycle(Gdx.graphics.getDeltaTime());
-        }
 
         if (playerState != PlayerState.REST && playerState != PlayerState.DIE) {
             if (isAttacking) {
@@ -242,8 +239,8 @@ public class Player {
 
     public void dispose() {}
 
-    static class ActiveEffect {
-        int type;
+    public static class ActiveEffect {
+        public int type;
         float duration;
         float stateTime;
         Player player;
