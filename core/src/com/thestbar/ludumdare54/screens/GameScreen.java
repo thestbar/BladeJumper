@@ -423,6 +423,16 @@ public class GameScreen implements Screen {
                         selectedButton.remove();
                         selectedButton = null;
                         player.collectedPowerupTypes.removeValue(selectedPowerupTypeId, true);
+                        // Check if any active effect should be initialized
+                        if (powerupGrid[0][0] != null && powerupGrid[0][1] != null && powerupGrid[0][2] != null) {
+                            player.activatePowerUp(0, 15);
+                        }
+                        if (powerupGrid[1][0] != null && powerupGrid[1][1] != null && powerupGrid[1][2] != null) {
+                            player.activatePowerUp(1, 15);
+                        }
+                        if (powerupGrid[2][0] != null && powerupGrid[2][1] != null && powerupGrid[2][2] != null) {
+                            player.activatePowerUp(2, 15);
+                        }
                     }
                 }
             }
@@ -475,21 +485,36 @@ public class GameScreen implements Screen {
         title.setFontScale(0.8f);
         powerupRootTable.add(title).colspan(6).expandX().height(100).padTop(100).row();
 
-        Label title1 = new Label("Combine", this.game.skin);
+        Label title1 = new Label("Inventory", this.game.skin);
         title1.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
         title1.setFontScale(0.6f);
-        powerupRootTable.add(title1).colspan(3).expandX();
+        powerupRootTable.add(title1).colspan(3).expandX().padBottom(20);
 
-        Label title2 = new Label("Inventory", this.game.skin);
+        Label title2 = new Label("Combine", this.game.skin);
         title2.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
         title2.setFontScale(0.6f);
         powerupRootTable.add(title2).colspan(3).expandX().padBottom(20).row();
 
         Table innerTable = new Table();
-        Table emptyTable = new Table();
+        Table powerupFontsTable = new Table();
 
-        powerupRootTable.add(innerTable).colspan(3).expandX();
-        powerupRootTable.add(emptyTable).colspan(3).expandX();
+        Label font1 = new Label("x2 Damage", this.game.skin);
+        font1.setStyle(LabelStyleUtil.getLabelStyle(this.game, "font", Color.WHITE));
+        font1.setFontScale(0.8f);
+        powerupFontsTable.add(font1).left().padTop(30).row();
+
+        Label font2 = new Label("x2 HP", this.game.skin);
+        font2.setStyle(LabelStyleUtil.getLabelStyle(this.game, "font", Color.WHITE));
+        font2.setFontScale(0.8f);
+        powerupFontsTable.add(font2).left().padTop(60).row();
+
+        Label font3 = new Label("x2 Jump", this.game.skin);
+        font3.setStyle(LabelStyleUtil.getLabelStyle(this.game, "font", Color.WHITE));
+        font3.setFontScale(0.8f);
+        powerupFontsTable.add(font3).left().padTop(60).row();
+
+        powerupRootTable.add(innerTable).top().left().padLeft(140).colspan(3).expandX();
+        powerupRootTable.add(powerupFontsTable).left().padLeft(410).colspan(3).expandX();
 
         int i = 0;
         for (final int powerupTypeId : player.collectedPowerupTypes) {

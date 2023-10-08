@@ -16,7 +16,7 @@ import com.thestbar.ludumdare54.utils.LabelStyleUtil;
 
 public class MainMenu implements Screen {
     private final GameApp game;
-    private SoundManager soundManager;
+    private final SoundManager soundManager;
     private TextButton startGameButton;
     private Label titleLabel;
 

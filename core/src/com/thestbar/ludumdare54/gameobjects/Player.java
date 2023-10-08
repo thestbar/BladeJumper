@@ -1,8 +1,6 @@
 package com.thestbar.ludumdare54.gameobjects;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.audio.Sound;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
@@ -10,14 +8,10 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.DelayedRemovalArray;
 import com.thestbar.ludumdare54.GameApp;
 import com.thestbar.ludumdare54.managers.SoundManager;
-import com.thestbar.ludumdare54.screens.GameScreen;
 import com.thestbar.ludumdare54.utils.Box2DUtils;
 import com.thestbar.ludumdare54.utils.Constants;
-
-import java.util.Arrays;
 
 public class Player {
     public GameApp game;
@@ -40,6 +34,9 @@ public class Player {
     public float healthPoints;
     private SoundManager soundManager;
     public Array<Integer> collectedPowerupTypes;
+    private Array<ActiveEffect> activeEffects;
+    private float jumpMultiplier;
+    public float armor;
 
     public Player(GameApp game, World world, int x, int y, SoundManager soundManager) {
         this.game = game;
@@ -90,15 +87,18 @@ public class Player {
         playerDamage = 30f;
         healthPoints = 120f;
         maxHealthPoints = 120f;
+        jumpMultiplier = 1f;
+        armor = 1f;
+        activeEffects = new Array<>();
         collectedPowerupTypes = new Array<>();
-//        collectedPowerupTypes.add(2);
-//        collectedPowerupTypes.add(0);
-//        collectedPowerupTypes.add(2);
-//        collectedPowerupTypes.add(1);
-//        collectedPowerupTypes.add(1);
-//        collectedPowerupTypes.add(0);
-//        collectedPowerupTypes.add(1);
-//        collectedPowerupTypes.add(2);
+        collectedPowerupTypes.add(2);
+        collectedPowerupTypes.add(0);
+        collectedPowerupTypes.add(2);
+        collectedPowerupTypes.add(1);
+        collectedPowerupTypes.add(1);
+        collectedPowerupTypes.add(0);
+        collectedPowerupTypes.add(1);
+        collectedPowerupTypes.add(2);
     }
 
     public enum PlayerState {
@@ -116,6 +116,9 @@ public class Player {
         }
 
         renderPlayer(batch);
+        for (ActiveEffect effect : activeEffects) {
+            effect.cycle(Gdx.graphics.getDeltaTime());
+        }
 
         if (playerState != PlayerState.REST && playerState != PlayerState.DIE) {
             if (isAttacking) {
@@ -189,7 +192,7 @@ public class Player {
 
     public void jump(int force) {
         soundManager.playSound("jump");
-        body.applyForceToCenter(0, force, true);
+        body.applyForceToCenter(0, force * jumpMultiplier, true);
     }
 
     public void move(int horizontalForce) {
@@ -222,16 +225,77 @@ public class Player {
         collectedPowerupTypes.add(powerup.powerupType);
     }
 
+    public void activatePowerUp(int type, float duration) {
+        activeEffects.add(new ActiveEffect(this, type, duration));
+    }
+
     public void damagePlayer(float damage) {
         if (playerState == PlayerState.DIE || playerState == PlayerState.WIN) {
             return;
         }
         soundManager.playSound("hurt");
-        healthPoints = Math.max(0, healthPoints - damage);
+        healthPoints = Math.max(0, healthPoints - damage / armor);
         if (healthPoints == 0) {
             die();
         }
     }
 
     public void dispose() {}
+
+    static class ActiveEffect {
+        int type;
+        float duration;
+        float stateTime;
+        Player player;
+
+        public ActiveEffect(Player player, int type, float duration) {
+            this.type = type;
+            this.duration = duration;
+            this.player = player;
+            stateTime = 0;
+            activateEffect();
+        }
+
+        public void activateEffect() {
+            switch (type) {
+                case 0:
+                    player.playerDamage *= 2;
+                    break;
+                case 1:
+                    player.armor = 3;
+                    break;
+                case 2:
+                    player.jumpMultiplier *= 1.6f;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public void disableEffect() {
+            switch (type) {
+                case 0:
+                    player.playerDamage /= 2;
+                    break;
+                case 1:
+                    player.armor = 1;
+                    break;
+                case 2:
+                    player.jumpMultiplier /= 1.6f;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public boolean cycle(float deltaTime) {
+            stateTime += deltaTime;
+            if (stateTime >= duration) {
+                disableEffect();
+                player.activeEffects.removeValue(this, true);
+                return true;
+            }
+            return false;
+        }
+    }
 }
