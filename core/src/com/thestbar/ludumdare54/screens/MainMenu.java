@@ -63,6 +63,10 @@ public class MainMenu implements Screen {
         label3.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
         rootTable.add(label3).row();
         label3.setFontScale(0.8f);
+        Label label4 = new Label("Tab to open Power Ups Menu!", this.game.skin);
+        label4.setStyle(LabelStyleUtil.getLabelStyle(this.game, "subtitle", Color.WHITE));
+        rootTable.add(label4).row();
+        label4.setFontScale(0.8f);
 
         startGameButton = new TextButton("Start", this.game.skin);
         rootTable.add(startGameButton).padTop(80).row();

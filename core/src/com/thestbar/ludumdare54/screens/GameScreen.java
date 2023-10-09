@@ -523,7 +523,32 @@ public class GameScreen implements Screen {
         powerupFontsTable.add(font3).left().padTop(60).row();
 
         powerupRootTable.add(innerTable).top().left().padLeft(140).colspan(3).expandX();
-        powerupRootTable.add(powerupFontsTable).left().padLeft(410).colspan(3).expandX();
+        powerupRootTable.add(powerupFontsTable).left().padLeft(410).colspan(3).expandX().row();
+
+        Label info1 = new Label("Use left click on a rune stored in the Inventory!", this.game.skin);
+        info1.setStyle(LabelStyleUtil.getLabelStyle(this.game, "font", Color.WHITE));
+        info1.setFontScale(0.8f);
+        powerupRootTable.add(info1).colspan(6).expandX().padTop(50).row();
+
+        Label info2 = new Label("While a rune is activated use A, W, S and D to move it in Combine Grid!", this.game.skin);
+        info2.setStyle(LabelStyleUtil.getLabelStyle(this.game, "font", Color.WHITE));
+        info2.setFontScale(0.8f);
+        powerupRootTable.add(info2).colspan(6).expandX().row();
+
+        Label info3 = new Label("When you want to save the position of the rune press Space!", this.game.skin);
+        info3.setStyle(LabelStyleUtil.getLabelStyle(this.game, "font", Color.WHITE));
+        info3.setFontScale(0.8f);
+        powerupRootTable.add(info3).colspan(6).expandX().row();
+
+        Label info4 = new Label("Be very wise with how you position your runes, space is your limit!", this.game.skin);
+        info4.setStyle(LabelStyleUtil.getLabelStyle(this.game, "font", Color.WHITE));
+        info4.setFontScale(0.8f);
+        powerupRootTable.add(info4).colspan(6).expandX().row();
+
+        Label info5 = new Label("You can press Tab to exit Power Ups Menu!", this.game.skin);
+        info5.setStyle(LabelStyleUtil.getLabelStyle(this.game, "font", Color.WHITE));
+        info5.setFontScale(0.8f);
+        powerupRootTable.add(info5).colspan(6).expandX();
 
         int i = 0;
         for (final int powerupTypeId : player.collectedPowerupTypes) {
