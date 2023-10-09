@@ -61,6 +61,7 @@ public class GameScreen implements Screen {
     private float titleLabelSize = 2f;
     private Stage uiStage;
     private ProgressBar uiPlayerHealthBar;
+    private Table powerupDisplayTable;
 
     // Tab menu
     private boolean isPowerupMenuOpen = false;
@@ -184,12 +185,16 @@ public class GameScreen implements Screen {
         uiRootTable.top().left();
         uiRootTable.setFillParent(true);
         uiStage.addActor(uiRootTable);
+//        uiRootTable.debug();
 
         uiPlayerHealthBar = new ProgressBar(0, player.maxHealthPoints, 1, false, game.skin);
         uiPlayerHealthBar.setStyle(new ProgressBar
                 .ProgressBarStyle(game.skin.get("health", ProgressBar.ProgressBarStyle.class)));
         uiPlayerHealthBar.setValue(player.maxHealthPoints);
         uiRootTable.add(uiPlayerHealthBar).width(500).padTop(20).padLeft(20);
+
+        powerupDisplayTable = new Table();
+        uiRootTable.add(powerupDisplayTable).expandX().right().top().padTop(20).padRight(20);
 
         // Powerup menu UI
         powerupGuiAtlas = new TextureAtlas("skins/powerups-gui/ld54-powerups-gui.atlas");
@@ -302,8 +307,8 @@ public class GameScreen implements Screen {
         if (player.playerState == Player.PlayerState.DIE ||
             player.playerState == Player.PlayerState.WIN) {
             if (player.playerState == Player.PlayerState.WIN) {
-                titleLabel.setText("You Won!");
-                nextLabel.setText("Thanks for playing!");
+                titleLabel.setText("Level Finished!");
+                nextLabel.setText("Thanks for playing! More Levels Coming!å");
             }
             game.batch.begin();
             game.batch.draw(game.assetManager.get("spritesheets/ld54-black-transparent.png", Texture.class),
@@ -433,14 +438,17 @@ public class GameScreen implements Screen {
                         selectedButton = null;
                         player.collectedPowerupTypes.removeValue(selectedPowerupTypeId, true);
                         // Check if any active effect should be initialized
-                        if (powerupGrid[0][0] != null && powerupGrid[0][1] != null && powerupGrid[0][2] != null) {
-                            player.activatePowerUp(0, 15);
+                        if (!player.activatedPowerups[0] && powerupGrid[0][0] != null && powerupGrid[0][1] != null && powerupGrid[0][2] != null) {
+                            player.activatedPowerups[0] = true;
+                            player.activatePowerUp(0, 15, powerupDisplayTable);
                         }
-                        if (powerupGrid[1][0] != null && powerupGrid[1][1] != null && powerupGrid[1][2] != null) {
-                            player.activatePowerUp(1, 15);
+                        if (!player.activatedPowerups[1] && powerupGrid[1][0] != null && powerupGrid[1][1] != null && powerupGrid[1][2] != null) {
+                            player.activatedPowerups[1] = true;
+                            player.activatePowerUp(1, 15, powerupDisplayTable);
                         }
-                        if (powerupGrid[2][0] != null && powerupGrid[2][1] != null && powerupGrid[2][2] != null) {
-                            player.activatePowerUp(2, 15);
+                        if (!player.activatedPowerups[2] && powerupGrid[2][0] != null && powerupGrid[2][1] != null && powerupGrid[2][2] != null) {
+                            player.activatedPowerups[2] = true;
+                            player.activatePowerUp(2, 15, powerupDisplayTable);
                         }
                     }
                 }

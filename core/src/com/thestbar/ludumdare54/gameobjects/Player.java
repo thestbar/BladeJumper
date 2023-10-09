@@ -1,17 +1,21 @@
 package com.thestbar.ludumdare54.gameobjects;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
 import com.thestbar.ludumdare54.GameApp;
 import com.thestbar.ludumdare54.managers.SoundManager;
 import com.thestbar.ludumdare54.utils.Box2DUtils;
 import com.thestbar.ludumdare54.utils.Constants;
+import com.thestbar.ludumdare54.utils.LabelStyleUtil;
 
 public class Player {
     public GameApp game;
@@ -37,6 +41,7 @@ public class Player {
     public Array<ActiveEffect> activeEffects;
     private float jumpMultiplier;
     public float armor;
+    public boolean[] activatedPowerups;
 
     public Player(GameApp game, World world, int x, int y, SoundManager soundManager) {
         this.game = game;
@@ -89,16 +94,17 @@ public class Player {
         maxHealthPoints = 120f;
         jumpMultiplier = 1f;
         armor = 1f;
+        activatedPowerups = new boolean[3];
         activeEffects = new Array<>();
         collectedPowerupTypes = new Array<>();
-        collectedPowerupTypes.add(2);
-        collectedPowerupTypes.add(0);
-        collectedPowerupTypes.add(2);
-        collectedPowerupTypes.add(1);
-        collectedPowerupTypes.add(1);
-        collectedPowerupTypes.add(0);
-        collectedPowerupTypes.add(1);
-        collectedPowerupTypes.add(2);
+//        collectedPowerupTypes.add(2);
+//        collectedPowerupTypes.add(0);
+//        collectedPowerupTypes.add(2);
+//        collectedPowerupTypes.add(1);
+//        collectedPowerupTypes.add(1);
+//        collectedPowerupTypes.add(0);
+//        collectedPowerupTypes.add(1);
+//        collectedPowerupTypes.add(2);
     }
 
     public enum PlayerState {
@@ -222,8 +228,8 @@ public class Player {
         collectedPowerupTypes.add(powerup.powerupType);
     }
 
-    public void activatePowerUp(int type, float duration) {
-        activeEffects.add(new ActiveEffect(this, type, duration));
+    public void activatePowerUp(int type, float duration, Table table) {
+        activeEffects.add(new ActiveEffect(this, type, duration, table, game, soundManager));
     }
 
     public void damagePlayer(float damage) {
@@ -244,11 +250,38 @@ public class Player {
         float duration;
         float stateTime;
         Player player;
+        Table table;
+        String labelString;
+        Label label;
+        GameApp game;
+        SoundManager soundManager;
 
-        public ActiveEffect(Player player, int type, float duration) {
+        public ActiveEffect(Player player, int type, float duration, Table table,
+                            GameApp game, SoundManager soundManager) {
+            this.game = game;
             this.type = type;
             this.duration = duration;
             this.player = player;
+            this.table = table;
+            this.soundManager = soundManager;
+            labelString = "";
+            switch (type) {
+                case 0:
+                    labelString = "x2 Damage ";
+                    break;
+                case 1:
+                    labelString = "x2 HP ";
+                    break;
+                case 2:
+                    labelString = "x2 Jump ";
+                    break;
+                default:
+                    break;
+            }
+            label = new Label(labelString + (int) duration + "s", game.skin);
+            label.setStyle(LabelStyleUtil.getLabelStyle(game, "font", Color.WHITE));
+            label.setFontScale(0.8f);
+            table.add(label).right().top().row();
             stateTime = 0;
             activateEffect();
         }
@@ -267,6 +300,7 @@ public class Player {
                 default:
                     break;
             }
+            soundManager.playSound("enable-powerup");
         }
 
         public void disableEffect() {
@@ -283,13 +317,18 @@ public class Player {
                 default:
                     break;
             }
+            soundManager.playSound("disable-powerup");
         }
 
         public boolean cycle(float deltaTime) {
             stateTime += deltaTime;
+            int timeLeft = (int) (duration - stateTime) + 1;
+            label.setText(labelString + timeLeft + "s");
             if (stateTime >= duration) {
                 disableEffect();
                 player.activeEffects.removeValue(this, true);
+                player.activatedPowerups[type] = false;
+                table.removeActor(label);
                 return true;
             }
             return false;

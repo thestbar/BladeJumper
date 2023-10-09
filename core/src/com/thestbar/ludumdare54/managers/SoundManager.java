@@ -44,5 +44,7 @@ public class SoundManager {
         assetManager.load("sfx/powerup.wav", Sound.class);
         assetManager.load("sfx/walk.wav", Sound.class);
         assetManager.load("sfx/win.wav", Sound.class);
+        assetManager.load("sfx/enable-powerup.wav", Sound.class);
+        assetManager.load("sfx/disable-powerup.wav", Sound.class);
     }
 }
