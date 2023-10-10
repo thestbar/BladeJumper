@@ -38,7 +38,7 @@ import com.thestbar.ludumdare54.utils.TiledObjectUtil;
 import java.util.*;
 
 public class GameScreen implements Screen {
-    private GameApp game;
+    private final GameApp game;
     private Box2DDebugRenderer debugRenderer;
     private World world;
     private OrthographicCamera camera;
@@ -47,18 +47,13 @@ public class GameScreen implements Screen {
     public static Player player;
     private ListenerClass listener;
     public static Array<Body> bodiesToBeDeleted;
-    private MapObject levelEndPos;
     private float playerDiedDeltaTime;
-    private SoundManager soundManager;
+    private final SoundManager soundManager;
 
-    // Play again UI
-    private Table rootTable;
     private TextButton startGameButton;
     private Label titleLabel;
     private Label nextLabel;
 
-    // Title animation variables
-    private float titleLabelSize = 2f;
     private Stage uiStage;
     private ProgressBar uiPlayerHealthBar;
     private Table powerupDisplayTable;
@@ -67,14 +62,11 @@ public class GameScreen implements Screen {
     private boolean isPowerupMenuOpen = false;
     private Stage powerupStage;
     private Table powerupRootTable;
-    private TextureAtlas powerupGuiAtlas;
     private TextureRegion[] powerupTextures;
     private Array<ImageButton> powerupGuiButtons;
     private ImageButton selectedButton;
     private Map<ImageButton, Integer> guiButtonTypes;
     private Integer[][] powerupGrid;
-
-    private float printPowerupStateTime = 0;
 
     // TODO - There is a bug on double jump, when the player goes away from a platform without jumping
     public GameScreen(GameApp game) {
@@ -122,6 +114,7 @@ public class GameScreen implements Screen {
         MapObjects entities = map.getLayers().get("Entities").getObjects();
         MapObject playerStartPos;
 
+        MapObject levelEndPos;
         if (entities.get(0).getName().equals("PlayerStart")) {
             playerStartPos = entities.get(0);
             levelEndPos = entities.get(1);
@@ -160,12 +153,15 @@ public class GameScreen implements Screen {
         Lava.createLavas(game, world, map.getLayers().get("Lava").getObjects());
 
         // Play again UI initialization - Is being used and as win screen
-        rootTable = new Table();
+        // Play again UI
+        Table rootTable = new Table();
         rootTable.setFillParent(true);
         game.stage.addActor(rootTable);
 
         titleLabel = new Label("You Died!", this.game.skin);
         titleLabel.setStyle(LabelStyleUtil.getLabelStyle(this.game, "title", Color.ORANGE));
+        // Title animation variables
+        float titleLabelSize = 2f;
         titleLabel.setFontScale(titleLabelSize);
         rootTable.add(titleLabel).row();
         titleLabel.setFontScale(0.8f);
@@ -197,7 +193,7 @@ public class GameScreen implements Screen {
         uiRootTable.add(powerupDisplayTable).expandX().right().top().padTop(20).padRight(20);
 
         // Powerup menu UI
-        powerupGuiAtlas = new TextureAtlas("skins/powerups-gui/ld54-powerups-gui.atlas");
+        TextureAtlas powerupGuiAtlas = new TextureAtlas("skins/powerups-gui/ld54-powerups-gui.atlas");
         powerupTextures = new TextureRegion[8];
         powerupTextures[0] = powerupGuiAtlas.findRegion("ld54-powerup-menu");
         powerupTextures[1] = powerupGuiAtlas.findRegion("ld54-powerup-menu-no-grid");
@@ -239,8 +235,8 @@ public class GameScreen implements Screen {
                 0, 0, camera.viewportWidth * Constants.SCALE,
                 camera.viewportHeight * Constants.SCALE * 2);
         game.batch.end();
-        inputUpdate(delta);
-        cameraUpdate(delta);
+        inputUpdate();
+        cameraUpdate();
         if (!isPowerupMenuOpen) {
             world.step(1/60f, 6, 2);
         } else {
@@ -657,7 +653,7 @@ public class GameScreen implements Screen {
         return new ImageButton(game.skin, buttonStyle);
     }
 
-    private void inputUpdate(float delta) {
+    private void inputUpdate() {
         if (player.playerState == Player.PlayerState.DIE ||
             player.playerState == Player.PlayerState.WIN) {
             return;
@@ -705,8 +701,7 @@ public class GameScreen implements Screen {
         player.move(horizontalForce);
     }
 
-    private void cameraUpdate(float delta) {
-//        System.out.println(camera.position);
+    private void cameraUpdate() {
         Vector3 position = camera.position;
         // b = a + (b - a) * lerp
         // b = target

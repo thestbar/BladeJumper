@@ -36,7 +36,7 @@ public class Player {
     public float playerDamage;
     public float maxHealthPoints;
     public float healthPoints;
-    private SoundManager soundManager;
+    private final SoundManager soundManager;
     public Array<Integer> collectedPowerupTypes;
     public Array<ActiveEffect> activeEffects;
     private float jumpMultiplier;
