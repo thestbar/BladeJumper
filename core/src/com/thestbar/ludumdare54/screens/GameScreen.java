@@ -572,15 +572,12 @@ public class GameScreen implements Screen {
                         // Find available spot
                         switch (powerupTypeId) {
                             case 0: // Yellow
-                                System.out.println("Adding Yellow");
                                 findPositionForNewYellow(powerupTypeId);
                                 break;
                             case 1: // Red
-                                System.out.println("Adding Red");
                                 findPositionForNewRed(powerupTypeId);
                                 break;
                             case 2: // Green
-                                System.out.println("Adding Green");
                                 findPositionForNewGreen(powerupTypeId);
                                 break;
                             default:
