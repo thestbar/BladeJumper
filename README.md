@@ -1,7 +1,7 @@
 
 # Blade Jumper
 
-![Blade Jumper Logo](https://i.ibb.co/1JNjsnx/Screenshot-2023-10-04-at-17-48-16.png)
+![Blade Jumper Logo](https://raw.githubusercontent.com/thestbar/BladeJumper/main/assets/logo/Blade%20Jumper%20Logo.png)
 
 Game was created in Java language using LibGDX framework as an entry for Ludum Dare 54 Game Jam. The theme of the jam was "Limited Space". This game was created in under 72 hours. On later stages some rework was applied to the project to improve performance, stability and playability.
 
