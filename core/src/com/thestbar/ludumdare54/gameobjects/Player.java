@@ -41,6 +41,8 @@ public class Player {
     public Array<ActiveEffect> activeEffects;
     private float jumpMultiplier;
     public float armor;
+    public float healPerSecond;
+    private float healPerSecondStateTime;
     public boolean[] activatedPowerups;
 
     public Player(GameApp game, World world, int x, int y, SoundManager soundManager) {
@@ -94,6 +96,8 @@ public class Player {
         maxHealthPoints = 120f;
         jumpMultiplier = 1f;
         armor = 1f;
+        healPerSecond = 0f;
+        healPerSecondStateTime = 0f;
         activatedPowerups = new boolean[3];
         activeEffects = new Array<>();
         collectedPowerupTypes = new Array<>();
@@ -119,6 +123,12 @@ public class Player {
         if (!pauseAnimation) {
             stateTime += Gdx.graphics.getDeltaTime();
             weaponStateTime += Gdx.graphics.getDeltaTime();
+            healPerSecondStateTime += Gdx.graphics.getDeltaTime();
+        }
+
+        if (healPerSecondStateTime >= 1f) {
+            healthPoints = Math.min(maxHealthPoints, healthPoints + healPerSecond);
+            healPerSecondStateTime = 0f;
         }
 
         renderPlayer(batch);
@@ -267,10 +277,10 @@ public class Player {
             labelString = "";
             switch (type) {
                 case 0:
-                    labelString = "x2 Damage ";
+                    labelString = "x4 Damage ";
                     break;
                 case 1:
-                    labelString = "x2 HP ";
+                    labelString = "x10 Heal Per Second ";
                     break;
                 case 2:
                     labelString = "x2 Jump ";
@@ -289,13 +299,13 @@ public class Player {
         public void activateEffect() {
             switch (type) {
                 case 0:
-                    player.playerDamage *= 2;
+                    player.playerDamage *= 4f;
                     break;
                 case 1:
-                    player.armor = 3;
+                    player.healPerSecond = 10f;
                     break;
                 case 2:
-                    player.jumpMultiplier *= 1.6f;
+                    player.jumpMultiplier *= 2f;
                     break;
                 default:
                     break;
@@ -306,13 +316,13 @@ public class Player {
         public void disableEffect() {
             switch (type) {
                 case 0:
-                    player.playerDamage /= 2;
+                    player.playerDamage /= 4f;
                     break;
                 case 1:
-                    player.armor = 1;
+                    player.healPerSecond = 0f;
                     break;
                 case 2:
-                    player.jumpMultiplier /= 1.6f;
+                    player.jumpMultiplier /= 2f;
                     break;
                 default:
                     break;

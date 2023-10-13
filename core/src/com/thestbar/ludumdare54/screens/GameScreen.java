@@ -436,15 +436,15 @@ public class GameScreen implements Screen {
                         // Check if any active effect should be initialized
                         if (!player.activatedPowerups[0] && powerupGrid[0][0] != null && powerupGrid[0][1] != null && powerupGrid[0][2] != null) {
                             player.activatedPowerups[0] = true;
-                            player.activatePowerUp(0, 15, powerupDisplayTable);
+                            player.activatePowerUp(0, 40, powerupDisplayTable);
                         }
                         if (!player.activatedPowerups[1] && powerupGrid[1][0] != null && powerupGrid[1][1] != null && powerupGrid[1][2] != null) {
                             player.activatedPowerups[1] = true;
-                            player.activatePowerUp(1, 15, powerupDisplayTable);
+                            player.activatePowerUp(1, 10, powerupDisplayTable);
                         }
                         if (!player.activatedPowerups[2] && powerupGrid[2][0] != null && powerupGrid[2][1] != null && powerupGrid[2][2] != null) {
                             player.activatedPowerups[2] = true;
-                            player.activatePowerUp(2, 15, powerupDisplayTable);
+                            player.activatePowerUp(2, 60, powerupDisplayTable);
                         }
                     }
                 }
@@ -503,17 +503,17 @@ public class GameScreen implements Screen {
         Table innerTable = new Table();
         Table powerupFontsTable = new Table();
 
-        Label font1 = new Label("x2 Damage", this.game.skin);
+        Label font1 = new Label("Damage", this.game.skin);
         font1.setStyle(LabelStyleUtil.getLabelStyle(this.game, "font", Color.WHITE));
         font1.setFontScale(0.8f);
         powerupFontsTable.add(font1).left().padTop(30).row();
 
-        Label font2 = new Label("x2 HP", this.game.skin);
+        Label font2 = new Label("Heal", this.game.skin);
         font2.setStyle(LabelStyleUtil.getLabelStyle(this.game, "font", Color.WHITE));
         font2.setFontScale(0.8f);
         powerupFontsTable.add(font2).left().padTop(60).row();
 
-        Label font3 = new Label("x2 Jump", this.game.skin);
+        Label font3 = new Label("Jump", this.game.skin);
         font3.setStyle(LabelStyleUtil.getLabelStyle(this.game, "font", Color.WHITE));
         font3.setFontScale(0.8f);
         powerupFontsTable.add(font3).left().padTop(60).row();
