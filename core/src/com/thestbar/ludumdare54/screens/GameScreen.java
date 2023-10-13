@@ -683,7 +683,7 @@ public class GameScreen implements Screen {
             player.playerState = Player.PlayerState.MOVE_RIGHT;
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.W) && listener.isPlayerOnGround()) {
-            player.jump(800);
+            player.jump(1000);
         } else if (Gdx.input.isKeyJustPressed(Input.Keys.W) && !listener.isPlayerOnGround() && listener.isAvailableDoubleJump()) {
             player.jump(1000);
             listener.useDoubleJump();

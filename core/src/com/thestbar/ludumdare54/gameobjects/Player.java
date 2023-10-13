@@ -205,6 +205,9 @@ public class Player {
 
     public void jump(int force) {
         soundManager.playSound("jump");
+        // Remove all acting forces before apply the jump
+        // This fixes the double jump issue!
+        body.setLinearVelocity(new Vector2(0, 0));
         body.applyForceToCenter(0, force * jumpMultiplier, true);
     }
 
