@@ -61,23 +61,23 @@ public class Enemy {
         this.world = world;
         switch (enemyType) {
             case 0:
-                healthPoints = 200;
-                damage = 10;
+                healthPoints = 120;
+                damage = 5;
                 isEnemyRanged = false;
                 break;
             case 1:
-                healthPoints = 150;
-                damage = 15;
+                healthPoints = 100;
+                damage = 8;
                 isEnemyRanged = false;
                 break;
             case 2:
-                healthPoints = 80;
-                damage = 20;
+                healthPoints = 60;
+                damage = 10;
                 isEnemyRanged = false;
                 break;
             case 3:
-                healthPoints = 60;
-                damage = 35;
+                healthPoints = 40;
+                damage = 15;
                 isEnemyRanged = true;
                 break;
             default:
