@@ -67,6 +67,7 @@ public class GameScreen implements Screen {
     private ImageButton selectedButton;
     private Map<ImageButton, Integer> guiButtonTypes;
     private Integer[][] powerupGrid;
+    private boolean firstFrame;
 
     // TODO - There is a bug on double jump, when the player goes away from a platform without jumping
     public GameScreen(GameApp game) {
@@ -126,8 +127,8 @@ public class GameScreen implements Screen {
         int x = (int) rectangle.x;
         int y = (int) rectangle.y;
         player = new Player(game, world, x, y, soundManager);
-        camera.position.x = 143;
-        camera.position.y = 807;
+        camera.position.x = 144f;
+        camera.position.y = 808f;
         camera.position.z = 10f;
         camera.update();
 
@@ -216,6 +217,7 @@ public class GameScreen implements Screen {
 
         listener = new ListenerClass();
         world.setContactListener(listener);
+        firstFrame = true;
     }
 
     @Override
@@ -321,20 +323,6 @@ public class GameScreen implements Screen {
         }
 
         if (isPowerupMenuOpen) {
-//            printPowerupStateTime += Gdx.graphics.getDeltaTime();
-//            if (printPowerupStateTime > 5f) {
-//                printPowerupStateTime = 0;
-//                for (int i = 0; i < 3; ++i) {
-//                    for (int j = 0; j < 3; ++j) {
-//                        if (powerupGrid[i][j] == null) {
-//                            System.out.print("- ");
-//                        } else {
-//                            System.out.print(powerupGrid[i][j] + " ");
-//                        }
-//                    }
-//                    System.out.println();
-//                }
-//            }
             // Dim the screen
             game.batch.begin();
             game.batch.draw(game.assetManager.get("spritesheets/ld54-black-transparent.png", Texture.class),
@@ -703,12 +691,18 @@ public class GameScreen implements Screen {
 
     private void cameraUpdate() {
         Vector3 position = camera.position;
-        // b = a + (b - a) * lerp
-        // b = target
-        // a = current position
-        final float lerp = 0.1f;
-        position.x = position.x + (player.body.getPosition().x * Constants.PPM - position.x) * lerp;
-        position.y = position.y + (player.body.getPosition().y * Constants.PPM - position.y) * lerp;
+        if (firstFrame) {
+            firstFrame = false;
+            position.x = player.body.getPosition().x * Constants.PPM;
+            position.y = player.body.getPosition().y * Constants.PPM;
+        } else {
+            // b = a + (b - a) * lerp
+            // b = target
+            // a = current position
+            final float lerp = 0.1f;
+            position.x = position.x + (player.body.getPosition().x * Constants.PPM - position.x) * lerp;
+            position.y = position.y + (player.body.getPosition().y * Constants.PPM - position.y) * lerp;
+        }
         position.z = 10f;
         camera.position.set(position);
         camera.update();
